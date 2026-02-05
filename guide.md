@@ -398,7 +398,29 @@ security:
     commands: 10  # Max tool calls per minute
 ```
 
-### 5.2 Command Restrictions
+### 5.2 Outbound Messaging Limits
+
+**Critical:** A compromised agent could spam or leak data via social channels. Limit outbound messaging:
+
+```yaml
+security:
+  rateLimit:
+    # Outbound message limits per channel
+    outboundMessages:
+      telegram: 10   # Max 10 outbound msgs/minute
+      discord: 10
+      whatsapp: 5
+      email: 3       # Emails are higher risk - limit strictly
+```
+
+Why this matters:
+- Prevents data exfiltration via social channels
+- Stops spam if agent is prompt-injected
+- Gives you time to notice abnormal behavior
+
+⚠️ If your agent suddenly needs to send 50 messages in a minute, that's a red flag.
+
+### 5.3 Command Restrictions
 
 Restrict dangerous shell commands:
 
@@ -419,7 +441,7 @@ security:
     #   - "chmod 777"
 ```
 
-### 5.3 File System Boundaries
+### 5.4 File System Boundaries
 
 Restrict where your agent can read/write:
 
@@ -435,7 +457,7 @@ security:
       - "~/.gnupg"
 ```
 
-### 5.4 Audit Logging
+### 5.5 Audit Logging
 
 Enable logging to track what your agent does:
 
@@ -643,7 +665,29 @@ skills:
     - "~/.gnupg"
 ```
 
-### 8.4 Prefer Official/Audited Skills
+### 8.4 Supply Chain Verification
+
+Skills can be tampered with. Verify integrity when possible:
+
+```bash
+# If the skill provides a checksum, verify it:
+sha256sum downloaded-skill.tar.gz
+# Compare against published checksum
+
+# Check git commit signatures if available:
+cd ~/.openclaw/skills/some-skill
+git log --show-signature -1
+```
+
+**What to look for:**
+- **Checksums/hashes** published by skill authors
+- **Signed commits** in the git history
+- **Pinned versions** rather than "latest"
+- **Lock files** (package-lock.json, etc.) to prevent dependency swaps
+
+⚠️ If a skill has no verification method, treat it as higher risk.
+
+### 8.5 Prefer Official/Audited Skills
 
 Priority order:
 1. **Built-in skills** - Shipped with OpenClaw, vetted
@@ -825,14 +869,48 @@ echo "5. Backup Status:"
 ls -lt ~/openclaw-backups/*.tar.gz 2>/dev/null | head -3 || echo "No backups found"
 ```
 
-### 11.2 Stay Updated
+### 11.2 Update Hygiene (Supply Chain Protection)
+
+**⚠️ DO NOT update immediately when releases drop.**
+
+Why delayed updates matter:
+- Poisoned dependencies can slip into any release
+- Bugs may not surface until real-world usage
+- Community will raise alarms within days if something's wrong
+
+**Recommended strategy:**
+1. **Pick a random weekday** for your update check (not everyone updating Monday = herd immunity)
+2. **Delay updates by 5-7 days** after release
+3. **Monitor community channels** before updating (Discord, GitHub issues)
+4. **Update during waking hours** so you can rollback if needed
 
 ```bash
-# Check for OpenClaw updates:
+# Check for updates (don't auto-apply):
 openclaw update check
 
-# Update when available:
+# Only after 5-7 days AND no community issues:
 openclaw update run
+```
+
+**Automated delayed updates via cron:**
+
+Ask your agent to set up a weekly update check on your chosen day:
+```
+"Set up a cron job to check for OpenClaw updates every [WEEKDAY] at 9am, 
+but only apply updates that are at least 7 days old. 
+Notify me before applying any update."
+```
+
+The agent should:
+1. Check release date of available update
+2. Skip if released < 7 days ago
+3. Check GitHub issues / Discord for reported problems
+4. Only then apply (with human confirmation)
+
+**CHECKPOINT:** Verify your update schedule:
+```bash
+# List your cron jobs:
+crontab -l | grep -i openclaw
 ```
 
 ### 11.3 Rotate Credentials
