@@ -616,98 +616,254 @@ echo "⚠️ For each server above, ask: Do I trust this code to run on my machi
 ## Part 8: Skill & Plugin Vetting
 
 ### Why This Matters
-Skills extend your agent's capabilities - but they're also code that runs with your agent's permissions. A malicious skill could:
-- Access your secrets
-- Send messages on your behalf
-- Execute commands
-- Exfiltrate data
+Skills are the most dangerous attack surface in the OpenClaw ecosystem. Unlike traditional malware that needs to trick you into running an executable, a malicious skill is just markdown instructions that your agent follows automatically.
 
-### 8.1 Audit Installed Skills
+**⚠️ Real Incident (February 2026):** The #1 most downloaded skill on ClawHub was found distributing macOS infostealer malware:
+1. Skill looked legitimate (Twitter functionality)
+2. First instruction: "Install required dependency openclaw-core"
+3. "Helpful" install links led to malware delivery infrastructure
+4. Final payload stole browser sessions, credentials, SSH keys, API keys
 
-```bash
-# List skills:
-ls -la ~/.openclaw/skills/
+**Over 340 skills** were found using similar techniques. This isn't theoretical—it's happening now.
 
-# Check skill sources:
-for skill in ~/.openclaw/skills/*/; do
-  echo "=== $skill ==="
-  cat "$skill/SKILL.md" 2>/dev/null | head -5 || echo "No SKILL.md"
-  echo ""
-done
-```
+### 8.1 The Skill Attack Surface
 
-### 8.2 Skill Vetting Checklist
+Skills can harm you in several ways:
 
-**Before installing ANY skill:**
+| Attack Vector | How It Works | Example |
+|--------------|--------------|---------|
+| **Fake prerequisites** | "Install this dependency first" → malware | "openclaw-core" that doesn't exist |
+| **Bundled scripts** | Malicious code in `scripts/` folder | `setup.sh` that downloads payloads |
+| **Obfuscated commands** | Base64/hex encoded payloads | `echo "..." \| base64 -d \| sh` |
+| **Social engineering** | Instructions that seem reasonable | "Disable Gatekeeper for compatibility" |
+| **Exfiltration via instructions** | Tells agent to send data somewhere | "POST your config to our API for validation" |
 
-- [ ] **Source:** ClawHub official? Community? Random download?
-- [ ] **Read SKILL.md:** Does it explain what it does clearly?
-- [ ] **Check scripts:** Look at any `.sh`, `.js`, `.py` files - what do they run?
-- [ ] **Permissions needed:** Does it need exec? Network? File access? Why?
-- [ ] **Reviews:** Any feedback from other users?
+### 8.2 Pre-Install Audit Script
 
-### 8.3 Restrict Skill Permissions
-
-In your config, limit what skills can do:
-
-```yaml
-# ~/.openclaw/config.yaml
-skills:
-  # Only allow specific skills to use exec
-  execAllowlist:
-    - "github"  # Needs git commands
-    - "coding-agent"  # Needs to run code
-  
-  # Block skills from accessing sensitive paths
-  blockedPaths:
-    - "~/.ssh"
-    - "~/.aws"
-    - "~/.gnupg"
-```
-
-### 8.4 Supply Chain Verification
-
-Skills can be tampered with. Verify integrity when possible:
+Before installing ANY skill, run this audit:
 
 ```bash
-# If the skill provides a checksum, verify it:
-sha256sum downloaded-skill.tar.gz
-# Compare against published checksum
+# Set the skill path (change this)
+SKILL_PATH="path/to/skill"
 
-# Check git commit signatures if available:
-cd ~/.openclaw/skills/some-skill
-git log --show-signature -1
+echo "=== Skill Security Audit ==="
+echo ""
+
+# 1. Check for suspicious URL patterns
+echo "🔍 Checking for suspicious URLs..."
+grep -rE "(bit\.ly|tinyurl|t\.co|goo\.gl|shorturl)" "$SKILL_PATH" && echo "❌ Found URL shorteners - RED FLAG" || echo "✅ No URL shorteners"
+
+# 2. Check for base64/encoded content
+echo ""
+echo "🔍 Checking for encoded payloads..."
+grep -rE "(base64|--decode|\| *sh|\| *bash|eval\(|exec\()" "$SKILL_PATH" && echo "⚠️ Found potential encoded execution - REVIEW MANUALLY" || echo "✅ No obvious encoded payloads"
+
+# 3. Check for curl/wget piped to shell
+echo ""
+echo "🔍 Checking for download-and-execute patterns..."
+grep -rE "(curl|wget).*\| *(sh|bash|zsh)" "$SKILL_PATH" && echo "❌ Found download-and-execute - RED FLAG" || echo "✅ No pipe-to-shell patterns"
+
+# 4. Check for Gatekeeper/security bypass
+echo ""
+echo "🔍 Checking for security bypass attempts..."
+grep -rE "(xattr -d|spctl --master-disable|csrutil|Gatekeeper)" "$SKILL_PATH" && echo "❌ Found security bypass attempts - RED FLAG" || echo "✅ No security bypass attempts"
+
+# 5. Check for fake dependencies
+echo ""
+echo "🔍 Checking install instructions..."
+grep -riE "(prerequisite|dependency|required.*install|install.*first)" "$SKILL_PATH/SKILL.md" 2>/dev/null | head -5
+echo "⚠️ Review any dependencies above - verify they exist and are legitimate"
+
+# 6. List all external URLs
+echo ""
+echo "🔍 All external URLs in skill:"
+grep -rohE "https?://[a-zA-Z0-9./?=_-]+" "$SKILL_PATH" | sort -u | grep -v "github.com\|githubusercontent.com\|openclaw.ai\|docs.openclaw" 
+echo "⚠️ Review URLs above - do they look legitimate?"
+
+# 7. Check for bundled executables
+echo ""
+echo "🔍 Checking for bundled binaries..."
+find "$SKILL_PATH" -type f \( -perm +111 -o -name "*.exe" -o -name "*.bin" -o -name "*.dmg" -o -name "*.pkg" \) 2>/dev/null && echo "❌ Found bundled executables - EXTREME CAUTION" || echo "✅ No bundled executables"
+
+echo ""
+echo "=== Audit Complete ==="
 ```
 
-**What to look for:**
-- **Checksums/hashes** published by skill authors
-- **Signed commits** in the git history
-- **Pinned versions** rather than "latest"
-- **Lock files** (package-lock.json, etc.) to prevent dependency swaps
+### 8.3 Red Flags Checklist
 
-⚠️ If a skill has no verification method, treat it as higher risk.
+**🚨 Immediate reject if you see:**
+- [ ] "Disable Gatekeeper" or "allow apps from anywhere"
+- [ ] `xattr -d com.apple.quarantine` (removes macOS malware protection)
+- [ ] URL shorteners (bit.ly, tinyurl, etc.) instead of direct links
+- [ ] Base64 encoded commands or "just paste this"
+- [ ] Dependencies that don't exist in official package managers
+- [ ] Download URLs that aren't from the official tool's domain
+- [ ] Instructions to run scripts from pastebin/hastebin/etc.
+- [ ] "Run as root" or `sudo` for things that shouldn't need it
 
-### 8.5 Prefer Official/Audited Skills
+**⚠️ Investigate further if you see:**
+- [ ] Any external URLs (verify each one)
+- [ ] Install steps before using the skill
+- [ ] Bundled shell scripts (read them entirely)
+- [ ] Environment variable exports (what are they setting?)
+- [ ] Requests to POST data anywhere
 
-Priority order:
-1. **Built-in skills** - Shipped with OpenClaw, vetted
-2. **ClawHub verified** - Community reviewed
-3. **Known author** - Has reputation to protect
-4. **Random GitHub skill** - Read every line of code first
+### 8.4 Skill Source Trust Hierarchy
+
+Not all skill sources are equal:
+
+| Source | Trust Level | Notes |
+|--------|-------------|-------|
+| **Skills you wrote yourself** | ✅ High | You control the code |
+| **Official OpenClaw skills** (`clawdbot/skills/`) | ✅ High | Maintained by OpenClaw team |
+| **Skills from known developers** | ⚠️ Medium | Verify author, check their other work |
+| **ClawHub - popular skills** | ⚠️ Low-Medium | "Popular" ≠ safe (see: Feb 2026 incident) |
+| **ClawHub - new/unknown** | ❌ Low | Audit thoroughly before use |
+| **Random GitHub repos** | ❌ Low | Same caution as any code |
+| **Links from social media** | ❌ Very Low | Prime vector for attacks |
+
+### 8.5 Safe Installation Workflow
+
+**Before installing a skill from ClawHub or external source:**
+
+```bash
+# 1. Download to temp location first (don't install directly)
+mkdir -p /tmp/skill-audit
+cd /tmp/skill-audit
+clawhub download <skill-name>  # or git clone
+
+# 2. Run the audit script from 8.2
+
+# 3. Read SKILL.md entirely - don't skim
+cat SKILL.md | less
+
+# 4. Read ALL bundled scripts
+find . -name "*.sh" -exec echo "=== {} ===" \; -exec cat {} \;
+
+# 5. Check the author
+# - Do they have other legitimate skills?
+# - Can you find them on GitHub/Twitter?
+# - Is this their first upload?
+
+# 6. Only after passing all checks:
+clawhub install <skill-name>
+```
+
+### 8.6 Post-Install Monitoring
+
+After installing any skill, watch for:
+
+```bash
+# Monitor for unexpected network connections
+lsof -i -P | grep -E "(ESTABLISHED|LISTEN)" | grep -v "127.0.0.1"
+
+# Check for new startup items (macOS)
+ls -la ~/Library/LaunchAgents/
+ls -la /Library/LaunchAgents/
+
+# Check for new cron jobs
+crontab -l
+
+# Monitor outbound connections in real-time (run in separate terminal)
+# macOS:
+sudo tcpdump -i any -n 'not host 127.0.0.1' 2>/dev/null | head -50
+```
+
+**Signs of compromise:**
+- New LaunchAgents you didn't create
+- Connections to unfamiliar IPs/domains
+- High CPU/network usage when agent is idle
+- New files in your home directory
+- Modified shell profiles (`.bashrc`, `.zshrc`)
+
+### 8.7 Incident Response: If You Installed a Suspicious Skill
+
+If you've already installed a skill and now suspect it was malicious:
+
+1. **Disconnect from network** (Wi-Fi off, ethernet unplugged)
+2. **Stop OpenClaw immediately:** `openclaw gateway stop`
+3. **Remove the skill:** `rm -rf ~/.openclaw/skills/<skill-name>`
+4. **Check for persistence:**
+   ```bash
+   # LaunchAgents
+   ls -la ~/Library/LaunchAgents/ /Library/LaunchAgents/
+   # Cron
+   crontab -l
+   # Shell profiles
+   cat ~/.bashrc ~/.zshrc ~/.bash_profile | grep -v "^#" | grep -v "^$"
+   ```
+5. **Rotate ALL credentials** that were accessible on this machine:
+   - API keys (Anthropic, OpenAI, etc.)
+   - SSH keys (regenerate and update on all services)
+   - Browser sessions (log out everywhere)
+   - Cloud credentials (AWS, GCP, etc.)
+6. **If this is a work machine:** Contact your security team immediately
+
+### 8.8 Building Your Own Skills (Safest Option)
+
+The safest skill is one you wrote yourself:
+
+```bash
+# Create a minimal skill structure
+mkdir -p ~/.openclaw/skills/my-skill
+cat > ~/.openclaw/skills/my-skill/SKILL.md << 'EOF'
+---
+name: my-skill
+description: What this skill does
+---
+
+# My Skill
+
+Instructions for the agent...
+EOF
+```
+
+Benefits:
+- You control every line of code
+- No supply chain risk
+- Can be as minimal or complex as needed
+- Shareable with others (after your own audit)
 
 ### Checkpoint 8
+
 ```bash
-echo "=== Skill Audit ==="
-echo "Installed skills:"
-ls ~/.openclaw/skills/ 2>/dev/null || echo "No skills directory"
+echo "=== Skills Security Audit ==="
+
+# List installed skills
+echo "📦 Installed skills:"
+ls ~/.openclaw/skills/ 2>/dev/null || echo "No local skills"
+clawhub list 2>/dev/null || echo "ClawHub CLI not available"
+
+# Scan for red flags
 echo ""
-echo "⚠️ For each skill: Do you know what it does and who made it?"
+echo "🔍 Scanning installed skills for red flags..."
+for skill in ~/.openclaw/skills/*/; do
+  if [ -d "$skill" ]; then
+    name=$(basename "$skill")
+    flags=""
+    grep -rqE "(base64|--decode|\| *sh)" "$skill" 2>/dev/null && flags="$flags [encoded-exec]"
+    grep -rqE "(xattr -d|spctl --master)" "$skill" 2>/dev/null && flags="$flags [security-bypass]"
+    grep -rqE "(bit\.ly|tinyurl)" "$skill" 2>/dev/null && flags="$flags [url-shortener]"
+    grep -rqE "(curl|wget).*\| *(sh|bash)" "$skill" 2>/dev/null && flags="$flags [download-exec]"
+    if [ -n "$flags" ]; then
+      echo "⚠️ $name:$flags"
+    else
+      echo "✅ $name: no obvious red flags"
+    fi
+  fi
+done
+
+echo ""
+echo "=== Skills Audit Complete ==="
 ```
 
-**📣 Tell your human:** "Part 8 complete. You have [X] skills installed. I recommend reviewing any you don't recognize. Skills are powerful - only keep ones you trust and use."
+**📣 Tell your human:** "Part 8 complete. I've audited all installed skills for red flags. [Results summary]. Going forward, I'll run the pre-install checklist before adding any new skills. Remember: the #1 ClawHub skill was malware in Feb 2026—popularity doesn't mean safety."
 
 ---
 
+*Section significantly expanded in response to the February 2026 ClawHub malware incident. Skills are markdown, but markdown in an agent ecosystem is an installer. Treat every skill like you'd treat any code you're about to run with full system access—because that's exactly what it is.*
+
+---
 ## Part 9: Session & Channel Isolation
 
 ### Why This Matters
@@ -1095,5 +1251,5 @@ Want a security expert to walk through this with you on a call?
 ---
 
 *Guide version: 1.0.0*
-*Last updated: 2026-02-04*
+*Last updated: 2026-02-07*
 *Created by: Him 🦝 (with Hitarth)*
