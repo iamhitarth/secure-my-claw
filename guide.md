@@ -89,6 +89,52 @@ echo "Home: $HOME"
 **If OpenClaw is not installed:** Stop here. Install OpenClaw first: https://docs.openclaw.ai/getting-started
 
 ---
+## 🚨 CRITICAL: Version Check (Do This First!)
+
+**Stop everything and check your version:**
+
+```bash
+openclaw --version
+```
+
+### Minimum Safe Version: 2026.1.29
+
+Versions before 2026.1.29 contain **critical vulnerabilities**:
+- **One-click RCE** - Malicious website can steal your auth token and gain full gateway control
+- **Command injection** - Attackers can execute arbitrary commands
+- **Auth token theft** - Your gateway can be hijacked remotely
+
+**If your version is older than 2026.1.29:**
+
+```bash
+# Update immediately
+openclaw update
+
+# Or reinstall
+npm install -g openclaw@latest
+
+# Verify
+openclaw --version
+```
+
+**🚨 Do not proceed with the rest of this guide until you're on 2026.1.29 or later.**
+
+### ⚠️ Fake Extensions Warning
+
+Malicious actors have published fake VS Code extensions:
+- "Clawdbot Agent" 
+- "OpenClaw Helper"
+- Similar names with slight variations
+
+These install **trojans and remote access malware**.
+
+**Before installing any OpenClaw-related extension:**
+1. Check the publisher is verified/official
+2. Check install count and reviews
+3. Verify on official OpenClaw docs
+4. When in doubt, don't install
+
+---
 
 ## Part 1: User & Permissions
 
@@ -487,6 +533,55 @@ grep -q "exec:" ~/.openclaw/config.yaml 2>/dev/null && echo "✅ Exec policy con
 ```
 
 **📣 Tell your human:** "Part 5 complete. I now have guardrails: rate limits prevent runaway loops, [exec restrictions limit dangerous commands / logging tracks what I do]. You can review my activity in the audit logs anytime."
+
+
+### 5.6 Untrusted Content Handling
+
+**⚠️ Critical Architecture Issue (Feb 2026):** OpenClaw processes content from untrusted sources (emails, shared documents, web pages) in the same context as your direct instructions. This enables **indirect prompt injection attacks**.
+
+**The risk:** An attacker embeds malicious instructions in an email or document. When your agent processes it, those instructions execute with your agent's full permissions.
+
+**Example attack:**
+```
+From: attacker@evil.com
+Subject: Meeting notes
+
+[Hidden text or instructions that tell your agent to 
+exfiltrate data, send messages, or run commands]
+```
+
+**Mitigations:**
+
+```yaml
+# ~/.openclaw/config.yaml
+
+# 1. Isolate untrusted content processing
+security:
+  untrustedSources:
+    # Process these in restricted mode
+    - email
+    - sharedDocuments
+    - webContent
+  
+  restrictedMode:
+    # Disable dangerous tools when processing untrusted content
+    disabledTools:
+      - exec
+      - message
+      - browser
+```
+
+**Behavioral mitigations:**
+- Don't have your agent automatically process emails from unknown senders
+- Be cautious with shared documents from external sources
+- Review agent actions when it's working with external content
+- Use dedicated/isolated sessions for processing untrusted data
+
+**Signs of indirect prompt injection:**
+- Agent suddenly takes unexpected actions
+- Agent tries to contact external services unprompted
+- Agent asks for permissions it shouldn't need for the current task
+- Agent's responses contain content you didn't ask for
 
 ---
 
