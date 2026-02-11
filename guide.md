@@ -817,6 +817,16 @@ Not all skill sources are equal:
 | **Random GitHub repos** | ❌ Low | Same caution as any code |
 | **Links from social media** | ❌ Very Low | Prime vector for attacks |
 
+#### ClawHub Automated Scanning (February 2026)
+
+ClawHub now scans all skills via VirusTotal before publishing:
+- ✅ **Benign** → auto-approved for download
+- ⚠️ **Suspicious** → warning displayed, proceed with caution
+- ❌ **Malicious** → blocked from download
+- Skills are re-scanned daily
+
+**Important:** This is not a silver bullet. Prompt injection payloads can evade automated detection. Always perform manual vetting using the checklist in sections 8.2-8.3.
+
 ### 8.5 Safe Installation Workflow
 
 **Before installing a skill from ClawHub or external source:**
@@ -1346,5 +1356,5 @@ Want a security expert to walk through this with you on a call?
 ---
 
 *Guide version: 1.0.0*
-*Last updated: 2026-02-07*
+*Last updated: 2026-02-11*
 *Created by: Him 🦝 (with Hitarth)*
