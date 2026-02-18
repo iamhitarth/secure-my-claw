@@ -81,9 +81,9 @@ Read https://raw.githubusercontent.com/iamhitarth/secure-my-claw/main/guide.md a
 
 ## Need help?
 
-**Done-With-You Session** — $249/hr screen share where we harden your setup together.
-
-[Book a session →](https://cal.com/hitarth) *(coming soon)*
+Reach out:
+- [LinkedIn](https://www.linkedin.com/in/hitarthsharma/)
+- [X/Twitter](https://x.com/iamhitarth)
 
 ---
 
