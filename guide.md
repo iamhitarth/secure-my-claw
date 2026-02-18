@@ -155,14 +155,16 @@ echo "Home: $HOME"
 openclaw --version
 ```
 
-### Minimum Safe Version: 2026.1.29
+### Minimum Safe Version: 2026.2.15
 
-Versions before 2026.1.29 contain **critical vulnerabilities**:
-- **One-click RCE** - Malicious website can steal your auth token and gain full gateway control
-- **Command injection** - Attackers can execute arbitrary commands
-- **Auth token theft** - Your gateway can be hijacked remotely
+Versions before 2026.2.15 contain **critical vulnerabilities**:
+- **Log poisoning (2026.2.13)** - Unsanitized WebSocket headers could inject malicious content into logs, enabling indirect prompt injection if your agent reads logs for troubleshooting
+- **60+ security fixes (2026.2.15)** - Various vulnerabilities patched in comprehensive security audit
+- **One-click RCE (2026.1.29)** - Malicious website can steal your auth token and gain full gateway control
+- **Command injection (2026.1.29)** - Attackers can execute arbitrary commands
+- **Auth token theft (2026.1.29)** - Your gateway can be hijacked remotely
 
-**If your version is older than 2026.1.29:**
+**If your version is older than 2026.2.15:**
 
 ```bash
 # Update immediately
@@ -175,7 +177,7 @@ npm install -g openclaw@latest
 openclaw --version
 ```
 
-**🚨 Do not proceed with the rest of this guide until you're on 2026.1.29 or later.**
+**🚨 Do not proceed with the rest of this guide until you're on 2026.2.15 or later.**
 
 ### ⚠️ Fake Extensions Warning
 
@@ -564,6 +566,8 @@ security:
 ### 5.5 Audit Logging
 
 Enable logging to track what your agent does:
+
+> ⚠️ **Logs as Attack Surface:** As of 2026.2.13, a log poisoning vulnerability was patched where attacker-controlled WebSocket headers could be written to logs. If your agent reads logs for troubleshooting, treat log content as potentially untrusted input. Ensure you're on **2026.2.15+** to have this patched.
 
 ```yaml
 logging:
