@@ -5,6 +5,64 @@
 
 ---
 
+## ⚖️ Security Model: The Honest Trade-offs
+
+Before diving into hardening, understand what you're working with.
+
+### What OpenClaw IS
+
+OpenClaw is an **agent that can execute arbitrary code on your machine**. That's the point — it's powerful because it can actually do things: run shell commands, edit files, browse the web, send messages on your behalf.
+
+### The Fundamental Trade-off
+
+**Power ↔ Risk.** Every capability you give your agent is a capability that could be misused — whether through your own mistakes, prompt injection, or malicious inputs.
+
+### Threat Landscape
+
+| Threat | Can we mitigate? | How |
+|--------|------------------|-----|
+| **Exposed secrets** | ✅ Yes | Move to env vars, use secret managers |
+| **Network attacks** | ✅ Yes | Localhost-only, Tailscale |
+| **Unauthorized users** | ✅ Yes | Channel allowlists |
+| **Runaway commands** | ✅ Yes | Rate limiting, human-in-the-loop |
+| **Malicious skills** | ⚠️ Partially | ClawHub verification, code review |
+| **Prompt injection** | ⚠️ Partially | Awareness, input validation, but NOT solved |
+| **Physical access** | ❌ No | Out of scope — encrypt your disk |
+| **Compromised providers** | ❌ No | Out of scope — trust your AI provider |
+
+### Prompt Injection: The Unsolved Problem
+
+**No agent system today is fully protected from prompt injection.** This is an industry-wide unsolved problem, not an OpenClaw-specific issue.
+
+What prompt injection means:
+- Malicious content (in emails, web pages, documents) could trick your agent into doing something you didn't intend
+- The agent might not realize it's being manipulated
+- This is fundamentally hard to solve because agents need to read untrusted content to be useful
+
+**Mitigations in this guide:**
+- Human-in-the-loop for sensitive actions
+- Rate limiting to prevent runaway damage
+- Awareness of what your agent is processing
+
+**What you should do based on risk level:**
+
+| Your situation | Recommendation |
+|----------------|----------------|
+| Personal tinkering | Follow this guide, you're probably fine |
+| Business/sensitive data | **Dedicated machine or VM** + this guide |
+| High-security environment | Air-gap or wait for tooling to mature |
+
+### The Right Mental Model
+
+Think of your agent like an **intern with shell access**:
+- Capable and helpful
+- Will do what you ask
+- Might make mistakes
+- Could be socially engineered
+- Don't give them the keys to prod
+
+---
+
 ## How to Use This Guide
 
 **If you're an AI agent:** Read this document sequentially. Each section has commands to run and checkpoints to verify. If you hit an error, check the troubleshooting section before asking your human.
