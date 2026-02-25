@@ -882,6 +882,17 @@ Not all skill sources are equal:
 | **Random GitHub repos** | ❌ Low | Same caution as any code |
 | **Links from social media** | ❌ Very Low | Prime vector for attacks |
 
+> **⚠️ Trust No Source Implicitly (February 2026 Update)**
+> 
+> In February 2026, [Trend Micro discovered](https://www.trendmicro.com/en_us/research/26/b/openclaw-skills-used-to-distribute-atomic-macos-stealer.html) malicious skills distributing the Atomic macOS Stealer had been uploaded to multiple "official" sources including:
+> - **openclaw/skills** GitHub repository
+> - SkillsMP.com
+> - skills.sh
+> 
+> This means even "official" sources should not be blindly trusted. Always run the audit script (8.2) regardless of source. The trust hierarchy above represents *relative* risk, not absolute safety.
+> 
+> **Model choice matters:** Trend Micro found GPT-4o more susceptible to following malicious skill instructions than Claude Opus 4.5, which identified the tricks and refused to execute. Consider your model's safety characteristics when evaluating skill risk.
+
 #### ClawHub Automated Scanning (February 2026)
 
 ClawHub now scans all skills via VirusTotal before publishing:
