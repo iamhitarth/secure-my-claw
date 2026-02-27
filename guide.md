@@ -321,6 +321,37 @@ export ANTHROPIC_API_KEY=$(op read "op://Personal/Anthropic/api-key")
 openclaw gateway start
 ```
 
+### 2.4 Infostealer Defense
+
+As of February 2026, infostealers are actively targeting `.openclaw/` directories ([Hudson Rock research](https://www.infosecurity-magazine.com/news/infostealer-targets-openclaw/)).
+
+**What attackers want:**
+| File | Why It's Valuable |
+|------|-------------------|
+| `openclaw.json` | Gateway token → remote access/impersonation |
+| `device.json` | Private keys → bypass device checks, decrypt logs |
+| `memory/*.md` | Personal context → social engineering goldmine |
+
+**Mitigations:**
+
+1. **Rotate gateway token regularly**
+   ```bash
+   openclaw gateway token --rotate
+   ```
+
+2. **Encrypt at rest** - Use FileVault (macOS) or LUKS (Linux) for full-disk encryption
+
+3. **Monitor for exfiltration** - Watch for unusual reads on `.openclaw/`:
+   ```bash
+   # macOS: Enable file access auditing
+   sudo praudit -l /dev/auditpipe | grep openclaw
+   ```
+
+4. **Treat infection as total compromise** - If you suspect infostealer, assume all OpenClaw secrets are burned:
+   - Rotate all API keys
+   - Regenerate gateway token
+   - Review memory files for sensitive info that may have been exfiltrated
+
 ### Checkpoint 2
 ```bash
 # Verify no plain text secrets in config:
