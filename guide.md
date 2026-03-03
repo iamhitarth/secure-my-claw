@@ -935,6 +935,10 @@ ClawHub now scans all skills via VirusTotal before publishing:
 
 **Important:** This is not a silver bullet. Prompt injection payloads can evade automated detection. Always perform manual vetting using the checklist in sections 8.2-8.3.
 
+> ⚠️ **Comment Section Attacks (February 2026):** Attackers are posting fake "troubleshooting" comments on popular ClawHub skills containing base64-encoded malware loaders ([source](https://www.helpnetsecurity.com/2026/02/23/clawhub-malicious-comment-infostealer/)). These comments look like helpful tips but download infostealers when executed. ClawHub's VirusTotal integration only scans skill packages, NOT comments.
+>
+> **Rule:** Never copy/paste commands from ClawHub comments. If you need troubleshooting help, ask in the official Discord or check the skill's GitHub issues.
+
 ### 8.5 Safe Installation Workflow
 
 **Before installing a skill from ClawHub or external source:**
