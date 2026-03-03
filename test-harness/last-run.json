@@ -1,0 +1,419 @@
+{
+  "timestamp": "2026-03-03T23:59:08Z",
+  "status": "❌ FAIL",
+  "errors": 57,
+  "warnings": 0,
+  "mode": "local",
+  "details": {
+  "errors": [
+    {
+      "line": 396,
+      "context": "3.2 Verify Localhost-Only Binding",
+      "type": "wrong-format",
+      "message": "OpenClaw uses JSON5 (openclaw.json), not YAML",
+      "code": "gateway:\n  host: 127.0.0.1  # ✅ Localhost only\n  port: 3000..."
+    },
+    {
+      "line": 403,
+      "context": "3.2 Verify Localhost-Only Binding",
+      "type": "wrong-format",
+      "message": "OpenClaw uses JSON5 (openclaw.json), not YAML",
+      "code": "gateway:\n  host: 0.0.0.0  # ❌ Exposed to network..."
+    },
+    {
+      "line": 470,
+      "context": "~/.openclaw/config.yaml",
+      "type": "wrong-format",
+      "message": "OpenClaw uses JSON5 (openclaw.json), not YAML",
+      "code": "# ~/.openclaw/config.yaml\ntelegram:\n  token: ${TELEGRAM_BOT_TOKEN}  # Use env var\n  allowlist:\n    -..."
+    },
+    {
+      "line": 535,
+      "context": "~/.openclaw/config.yaml",
+      "type": "wrong-format",
+      "message": "OpenClaw uses JSON5 (openclaw.json), not YAML",
+      "code": "# ~/.openclaw/config.yaml\nsecurity:\n  rateLimit:\n    messages: 30  # Max messages per minute\n    com..."
+    },
+    {
+      "line": 547,
+      "context": "5.2 Outbound Messaging Limits",
+      "type": "wrong-format",
+      "message": "OpenClaw uses JSON5 (openclaw.json), not YAML",
+      "code": "security:\n  rateLimit:\n    # Outbound message limits per channel\n    outboundMessages:\n      telegra..."
+    },
+    {
+      "line": 569,
+      "context": "5.3 Command Restrictions",
+      "type": "wrong-format",
+      "message": "OpenClaw uses JSON5 (openclaw.json), not YAML",
+      "code": "security:\n  exec:\n    mode: allowlist  # Only allow specific commands\n    allowlist:\n      - \"ls\"\n  ..."
+    },
+    {
+      "line": 590,
+      "context": "5.4 File System Boundaries",
+      "type": "wrong-format",
+      "message": "OpenClaw uses JSON5 (openclaw.json), not YAML",
+      "code": "security:\n  filesystem:\n    allowedPaths:\n      - \"~/.openclaw\"\n      - \"~/workspace\"\n    blockedPat..."
+    },
+    {
+      "line": 653,
+      "context": "1. Isolate untrusted content processing",
+      "type": "wrong-format",
+      "message": "OpenClaw uses JSON5 (openclaw.json), not YAML",
+      "code": "# ~/.openclaw/config.yaml\n\n# 1. Isolate untrusted content processing\nsecurity:\n  untrustedSources:\n ..."
+    },
+    {
+      "line": 695,
+      "context": "~/.openclaw/config.yaml",
+      "type": "wrong-format",
+      "message": "OpenClaw uses JSON5 (openclaw.json), not YAML",
+      "code": "# ~/.openclaw/config.yaml\ngateway:\n  host: 127.0.0.1\n  port: 3000\n  token: ${OPENCLAW_GATEWAY_TOKEN}..."
+    },
+    {
+      "line": 1104,
+      "context": "~/.openclaw/config.yaml",
+      "type": "wrong-format",
+      "message": "OpenClaw uses JSON5 (openclaw.json), not YAML",
+      "code": "# ~/.openclaw/config.yaml\nchannels:\n  telegram:\n    # High trust - full access\n    allowExec: true\n ..."
+    },
+    {
+      "line": 240,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "chmod 600 ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 240,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "chmod 600 ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 263,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "grep -iE \"(key|token|secret|password|credential)\" ~/.openclaw/config.yaml 2>/dev"
+    },
+    {
+      "line": 263,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "grep -iE \"(key|token|secret|password|credential)\" ~/.openclaw/config.yaml 2>/dev"
+    },
+    {
+      "line": 270,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "Move secrets from config.yaml to environment variables:"
+    },
+    {
+      "line": 274,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 274,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 281,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 281,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 314,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 314,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 359,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "if grep -qE \"sk-ant-|sk-|xoxb-|xoxp-\" ~/.openclaw/config.yaml 2>/dev/null; then"
+    },
+    {
+      "line": 359,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "if grep -qE \"sk-ant-|sk-|xoxb-|xoxp-\" ~/.openclaw/config.yaml 2>/dev/null; then"
+    },
+    {
+      "line": 391,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "grep -A5 \"gateway:\" ~/.openclaw/config.yaml | grep -E \"(host|bind|listen)\""
+    },
+    {
+      "line": 391,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "grep -A5 \"gateway:\" ~/.openclaw/config.yaml | grep -E \"(host|bind|listen)\""
+    },
+    {
+      "line": 470,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 470,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 520,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "grep -A10 \"telegram:\" ~/.openclaw/config.yaml 2>/dev/null | grep -q \"allowlist\" "
+    },
+    {
+      "line": 520,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "grep -A10 \"telegram:\" ~/.openclaw/config.yaml 2>/dev/null | grep -q \"allowlist\" "
+    },
+    {
+      "line": 521,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "grep -A10 \"discord:\" ~/.openclaw/config.yaml 2>/dev/null | grep -q \"allowlist\" &"
+    },
+    {
+      "line": 521,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "grep -A10 \"discord:\" ~/.openclaw/config.yaml 2>/dev/null | grep -q \"allowlist\" &"
+    },
+    {
+      "line": 535,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 535,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 627,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "grep -q \"rateLimit\" ~/.openclaw/config.yaml 2>/dev/null && echo \"✅ Rate limiting"
+    },
+    {
+      "line": 627,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "grep -q \"rateLimit\" ~/.openclaw/config.yaml 2>/dev/null && echo \"✅ Rate limiting"
+    },
+    {
+      "line": 628,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "grep -q \"exec:\" ~/.openclaw/config.yaml 2>/dev/null && echo \"✅ Exec policy confi"
+    },
+    {
+      "line": 628,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "grep -q \"exec:\" ~/.openclaw/config.yaml 2>/dev/null && echo \"✅ Exec policy confi"
+    },
+    {
+      "line": 653,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 653,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 695,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 695,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 727,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "if grep -qE \"token:\" ~/.openclaw/config.yaml 2>/dev/null; then"
+    },
+    {
+      "line": 727,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "if grep -qE \"token:\" ~/.openclaw/config.yaml 2>/dev/null; then"
+    },
+    {
+      "line": 751,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "grep -A20 \"mcp:\" ~/.openclaw/config.yaml 2>/dev/null || echo \"No MCP config foun"
+    },
+    {
+      "line": 751,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "grep -A20 \"mcp:\" ~/.openclaw/config.yaml 2>/dev/null || echo \"No MCP config foun"
+    },
+    {
+      "line": 799,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "grep -A5 \"mcp:\" ~/.openclaw/config.yaml 2>/dev/null | grep -E \"^\\s+-|name:\" || e"
+    },
+    {
+      "line": 799,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "grep -A5 \"mcp:\" ~/.openclaw/config.yaml 2>/dev/null | grep -E \"^\\s+-|name:\" || e"
+    },
+    {
+      "line": 1104,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 1104,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "# ~/.openclaw/config.yaml"
+    },
+    {
+      "line": 1148,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "grep -E \"^  (telegram|discord|signal|whatsapp|slack):\" ~/.openclaw/config.yaml 2"
+    },
+    {
+      "line": 1148,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "grep -E \"^  (telegram|discord|signal|whatsapp|slack):\" ~/.openclaw/config.yaml 2"
+    },
+    {
+      "line": 1162,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "- `~/.openclaw/config.yaml` - Your configuration"
+    },
+    {
+      "line": 1162,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "- `~/.openclaw/config.yaml` - Your configuration"
+    },
+    {
+      "line": 1183,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "~/.openclaw/config.yaml \\"
+    },
+    {
+      "line": 1183,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "~/.openclaw/config.yaml \\"
+    },
+    {
+      "line": 1230,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be openclaw.json",
+      "text": "grep -iE \"(sk-ant-|sk-|xoxb-)\" ~/.openclaw/config.yaml 2>/dev/null && echo \"❌ Pl"
+    },
+    {
+      "line": 1230,
+      "context": "inline text",
+      "type": "wrong-reference",
+      "message": "Should be ~/.openclaw/openclaw.json",
+      "text": "grep -iE \"(sk-ant-|sk-|xoxb-)\" ~/.openclaw/config.yaml 2>/dev/null && echo \"❌ Pl"
+    }
+  ],
+  "warnings": [],
+  "summary": {
+    "totalErrors": 57,
+    "totalWarnings": 0,
+    "byType": {
+      "wrong-format": 10,
+      "wrong-reference": 47
+    }
+  }
+}
+}
