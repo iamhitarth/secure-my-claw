@@ -237,7 +237,7 @@ ls -la ~/.openclaw/
 **Fix if needed:**
 ```bash
 chmod 700 ~/.openclaw
-chmod 600 ~/.openclaw/config.yaml
+chmod 600 ~/.openclaw/openclaw.json
 ```
 
 ### Checkpoint 1
@@ -260,25 +260,25 @@ API keys and tokens in plain text config files are the second most common securi
 
 ```bash
 # Find potential secrets in your config:
-grep -iE "(key|token|secret|password|credential)" ~/.openclaw/config.yaml 2>/dev/null | head -20
+grep -iE "(key|token|secret|password|credential)" ~/.openclaw/openclaw.json 2>/dev/null | head -20
 ```
 
 **🚨 Red flag:** If you see actual API keys/tokens printed, they're stored in plain text.
 
 ### 2.2 Use Environment Variables
 
-Move secrets from config.yaml to environment variables:
+Move secrets from openclaw.json to environment variables:
 
 **Before (insecure):**
 ```yaml
-# ~/.openclaw/config.yaml
+# ~/.openclaw/openclaw.json
 anthropic:
   apiKey: sk-ant-XXXXX  # ❌ Plain text secret
 ```
 
 **After (secure):**
 ```yaml
-# ~/.openclaw/config.yaml
+# ~/.openclaw/openclaw.json
 anthropic:
   apiKey: ${ANTHROPIC_API_KEY}  # ✅ References environment variable
 ```
@@ -311,7 +311,7 @@ For production setups, consider:
 
 Example with 1Password:
 ```yaml
-# ~/.openclaw/config.yaml
+# ~/.openclaw/openclaw.json
 anthropic:
   apiKey: ${ANTHROPIC_API_KEY}
 ```
@@ -405,7 +405,7 @@ openclaw gateway restart
 ### Checkpoint 2
 ```bash
 # Verify no plain text secrets in config:
-if grep -qE "sk-ant-|sk-|xoxb-|xoxp-" ~/.openclaw/config.yaml 2>/dev/null; then
+if grep -qE "sk-ant-|sk-|xoxb-|xoxp-" ~/.openclaw/openclaw.json 2>/dev/null; then
   echo "❌ Found plain text secrets in config - move to environment variables"
 else
   echo "✅ No obvious plain text secrets in config"
@@ -437,20 +437,26 @@ ss -tlnp | grep -E "(openclaw|node)"
 
 Check your config:
 ```bash
-grep -A5 "gateway:" ~/.openclaw/config.yaml | grep -E "(host|bind|listen)"
+grep -A5 "gateway:" ~/.openclaw/openclaw.json | grep -E "(host|bind|listen)"
 ```
 
 **Secure default:**
-```yaml
-gateway:
-  host: 127.0.0.1  # ✅ Localhost only
-  port: 3000
+```json5
+{
+  gateway: {
+    bind: "loopback",  // ✅ Localhost only
+    port: 18789
+  }
+}
 ```
 
 **🚨 Red flag:**
-```yaml
-gateway:
-  host: 0.0.0.0  # ❌ Exposed to network
+```json5
+{
+  gateway: {
+    bind: "lan"  // ❌ Exposed to network (0.0.0.0)
+  }
+}
 ```
 
 ### 3.3 Firewall Basics
@@ -515,12 +521,17 @@ Each channel (Telegram, Discord, etc.) has its own security considerations. A co
 - Regenerate token immediately if exposed: `/revoke` in @BotFather
 - Use `allowlist` to restrict who can message your bot
 
-```yaml
-# ~/.openclaw/config.yaml
-telegram:
-  token: ${TELEGRAM_BOT_TOKEN}  # Use env var
-  allowlist:
-    - "123456789"  # Your Telegram user ID only
+```json5
+// ~/.openclaw/openclaw.json
+{
+  channels: {
+    telegram: {
+      botToken: "${TELEGRAM_BOT_TOKEN}",  // Use env var
+      dmPolicy: "allowlist",
+      allowFrom: ["tg:123456789"]  // Your Telegram user ID only
+    }
+  }
+}
 ```
 
 **Find your Telegram user ID:**
@@ -566,8 +577,8 @@ ls -la ~/.openclaw/whatsapp/
 ```bash
 # Verify channel allowlists are configured:
 echo "=== Channel Security Check ==="
-grep -A10 "telegram:" ~/.openclaw/config.yaml 2>/dev/null | grep -q "allowlist" && echo "✅ Telegram allowlist configured" || echo "⚠️ Telegram: consider adding allowlist"
-grep -A10 "discord:" ~/.openclaw/config.yaml 2>/dev/null | grep -q "allowlist" && echo "✅ Discord allowlist configured" || echo "⚠️ Discord: consider adding allowlist"
+grep -A10 "telegram:" ~/.openclaw/openclaw.json 2>/dev/null | grep -q "allowlist" && echo "✅ Telegram allowlist configured" || echo "⚠️ Telegram: consider adding allowlist"
+grep -A10 "discord:" ~/.openclaw/openclaw.json 2>/dev/null | grep -q "allowlist" && echo "✅ Discord allowlist configured" || echo "⚠️ Discord: consider adding allowlist"
 ```
 
 **📣 Tell your human:** "Part 4 complete. Only YOU can message me now on [Telegram/Discord/etc]. Random people who find your bot can't interact with it - they'll be ignored."
@@ -580,27 +591,42 @@ grep -A10 "discord:" ~/.openclaw/config.yaml 2>/dev/null | grep -q "allowlist" &
 
 Prevent abuse by limiting how fast commands can be processed:
 
-```yaml
-# ~/.openclaw/config.yaml
-security:
-  rateLimit:
-    messages: 30  # Max messages per minute
-    commands: 10  # Max tool calls per minute
+```json5
+// ~/.openclaw/openclaw.json
+{
+  gateway: {
+    auth: {
+      rateLimit: {
+        maxAttempts: 10,      // Max failed auth attempts
+        windowMs: 60000,      // Per minute
+        lockoutMs: 300000     // 5 min lockout after max attempts
+      }
+    }
+  }
+}
 ```
 
 ### 5.2 Outbound Messaging Limits
 
-**Critical:** A compromised agent could spam or leak data via social channels. Limit outbound messaging:
+**Critical:** A compromised agent could spam or leak data via social channels.
 
-```yaml
-security:
-  rateLimit:
-    # Outbound message limits per channel
-    outboundMessages:
-      telegram: 10   # Max 10 outbound msgs/minute
-      discord: 10
-      whatsapp: 5
-      email: 3       # Emails are higher risk - limit strictly
+> ⚠️ **Note:** OpenClaw doesn't currently have built-in per-channel outbound rate limiting. Monitor for abnormal messaging patterns manually or via session logs.
+
+**Behavioral controls you CAN set:**
+
+```json5
+// ~/.openclaw/openclaw.json
+{
+  session: {
+    // Restrict which channels can receive agent-initiated sends
+    sendPolicy: {
+      rules: [
+        { action: "deny", match: { channel: "discord", chatType: "group" } }
+      ],
+      default: "allow"
+    }
+  }
+}
 ```
 
 Why this matters:
@@ -612,40 +638,54 @@ Why this matters:
 
 ### 5.3 Command Restrictions
 
-Restrict dangerous shell commands:
+Restrict shell command access via tool policies:
 
-```yaml
-security:
-  exec:
-    mode: allowlist  # Only allow specific commands
-    allowlist:
-      - "ls"
-      - "cat"
-      - "grep"
-      - "openclaw"
-    # Or use blocklist mode:
-    # mode: blocklist
-    # blocklist:
-    #   - "rm -rf"
-    #   - "sudo"
-    #   - "chmod 777"
+```json5
+// ~/.openclaw/openclaw.json
+{
+  tools: {
+    // Deny exec entirely for maximum safety
+    deny: ["exec", "process"],
+    
+    // Or use elevated mode for dangerous commands
+    elevated: {
+      enabled: true,
+      allowFrom: {
+        telegram: ["tg:123456789"],  // Only you can run elevated
+        discord: ["user:987654321"]
+      }
+    },
+    
+    // Exec-specific settings
+    exec: {
+      timeoutSec: 30,           // Kill long-running commands
+      backgroundMs: 10000       // Background after 10s
+    }
+  }
+}
 ```
 
 ### 5.4 File System Boundaries
 
-Restrict where your agent can read/write:
+Restrict where your agent can read/write using sandboxing:
 
-```yaml
-security:
-  filesystem:
-    allowedPaths:
-      - "~/.openclaw"
-      - "~/workspace"
-    blockedPaths:
-      - "~/.ssh"
-      - "~/.aws"
-      - "~/.gnupg"
+```json5
+// ~/.openclaw/openclaw.json
+{
+  agents: {
+    defaults: {
+      workspace: "~/.openclaw/workspace",  // Agent's working directory
+      sandbox: {
+        mode: "all",           // Sandbox all sessions
+        scope: "agent",        // One sandbox per agent
+        workspaceAccess: "rw"  // rw | ro | none
+      }
+    }
+  }
+}
 ```
+
+With sandboxing enabled, the agent can only access files within its workspace. Sensitive directories like `~/.ssh`, `~/.aws`, `~/.gnupg` are automatically isolated.
 
 ### 5.5 Audit Logging
 
@@ -653,11 +693,15 @@ Enable logging to track what your agent does:
 
 > ⚠️ **Logs as Attack Surface:** As of 2026.2.13, a log poisoning vulnerability was patched where attacker-controlled WebSocket headers could be written to logs. If your agent reads logs for troubleshooting, treat log content as potentially untrusted input. Ensure you're on **2026.2.25+** to have this and related issues patched.
 
-```yaml
-logging:
-  level: info
-  file: ~/.openclaw/logs/audit.log
-  includeTools: true  # Log all tool invocations
+```json5
+// ~/.openclaw/openclaw.json
+{
+  logging: {
+    level: "info",
+    file: "~/.openclaw/logs/openclaw.log",
+    redactSensitive: "tools"  // Redact sensitive data in tool logs
+  }
+}
 ```
 
 Review logs periodically:
@@ -673,8 +717,8 @@ grep "exec" ~/.openclaw/logs/audit.log | tail -20
 ```bash
 # Verify hardening:
 echo "=== Runtime Hardening Check ==="
-grep -q "rateLimit" ~/.openclaw/config.yaml 2>/dev/null && echo "✅ Rate limiting configured" || echo "⚠️ Consider adding rate limits"
-grep -q "exec:" ~/.openclaw/config.yaml 2>/dev/null && echo "✅ Exec policy configured" || echo "⚠️ Consider restricting exec"
+grep -q "rateLimit" ~/.openclaw/openclaw.json 2>/dev/null && echo "✅ Rate limiting configured" || echo "⚠️ Consider adding rate limits"
+grep -q "exec:" ~/.openclaw/openclaw.json 2>/dev/null && echo "✅ Exec policy configured" || echo "⚠️ Consider restricting exec"
 [ -f ~/.openclaw/logs/audit.log ] && echo "✅ Audit logging active" || echo "⚠️ Consider enabling audit logs"
 ```
 
@@ -698,24 +742,28 @@ exfiltrate data, send messages, or run commands]
 
 **Mitigations:**
 
-```yaml
-# ~/.openclaw/config.yaml
-
-# 1. Isolate untrusted content processing
-security:
-  untrustedSources:
-    # Process these in restricted mode
-    - email
-    - sharedDocuments
-    - webContent
+```json5
+// ~/.openclaw/openclaw.json
+{
+  // Use sandboxing for untrusted content processing
+  agents: {
+    defaults: {
+      sandbox: {
+        mode: "all",              // Sandbox all sessions
+        workspaceAccess: "none"   // No filesystem access for untrusted
+      }
+    }
+  },
   
-  restrictedMode:
-    # Disable dangerous tools when processing untrusted content
-    disabledTools:
-      - exec
-      - message
-      - browser
+  // Restrict tools when processing external content
+  tools: {
+    deny: ["exec", "browser"],    // Disable dangerous tools
+    profile: "messaging"          // Only allow messaging tools
+  }
+}
 ```
+
+> **Note:** OpenClaw doesn't yet have automatic "untrusted source" detection. Use separate agents or manual tool restrictions when processing external content.
 
 **Behavioral mitigations:**
 - Don't have your agent automatically process emails from unknown senders
@@ -740,12 +788,18 @@ The OpenClaw gateway accepts commands via HTTP. Without authentication, anyone w
 
 **This is not optional.** Add a gateway token to your config:
 
-```yaml
-# ~/.openclaw/config.yaml
-gateway:
-  host: 127.0.0.1
-  port: 3000
-  token: ${OPENCLAW_GATEWAY_TOKEN}  # Required - use env var
+```json5
+// ~/.openclaw/openclaw.json
+{
+  gateway: {
+    bind: "loopback",           // Localhost only
+    port: 18789,
+    auth: {
+      mode: "token",
+      token: "${OPENCLAW_GATEWAY_TOKEN}"  // Required - use env var
+    }
+  }
+}
 ```
 
 Generate a strong token:
@@ -773,7 +827,7 @@ curl -s -H "Authorization: Bearer $OPENCLAW_GATEWAY_TOKEN" http://localhost:3000
 ### Checkpoint 6
 ```bash
 # Verify gateway auth is configured:
-if grep -qE "token:" ~/.openclaw/config.yaml 2>/dev/null; then
+if grep -qE "token:" ~/.openclaw/openclaw.json 2>/dev/null; then
   echo "✅ Gateway token configured"
 else
   echo "❌ Gateway token NOT configured - FIX THIS NOW"
@@ -797,7 +851,7 @@ MCP (Model Context Protocol) servers are **arbitrary code execution**. When you 
 
 ```bash
 # List configured MCP servers:
-grep -A20 "mcp:" ~/.openclaw/config.yaml 2>/dev/null || echo "No MCP config found"
+grep -A20 "mcp:" ~/.openclaw/openclaw.json 2>/dev/null || echo "No MCP config found"
 
 # Or check the MCP config file if separate:
 cat ~/.openclaw/mcp.json 2>/dev/null || echo "No mcp.json found"
@@ -845,7 +899,7 @@ ls ~/.openclaw/mcp-servers/ 2>/dev/null
 ```bash
 echo "=== MCP Server Audit ==="
 echo "Configured MCP servers:"
-grep -A5 "mcp:" ~/.openclaw/config.yaml 2>/dev/null | grep -E "^\s+-|name:" || echo "None found in config"
+grep -A5 "mcp:" ~/.openclaw/openclaw.json 2>/dev/null | grep -E "^\s+-|name:" || echo "None found in config"
 echo ""
 echo "⚠️ For each server above, ask: Do I trust this code to run on my machine?"
 ```
@@ -1169,43 +1223,53 @@ Not all channels are equal. A message from your private Telegram should be more 
 
 ### 9.2 Configure Per-Channel Permissions
 
-```yaml
-# ~/.openclaw/config.yaml
-channels:
-  telegram:
-    # High trust - full access
-    allowExec: true
-    allowFileWrite: true
-    allowSensitiveData: true
-    
-  discord:
-    # Medium trust - limited access
-    allowExec: false  # No shell commands from Discord
-    allowFileWrite: false
-    allowSensitiveData: false
-    allowedCommands:
-      - "search"
-      - "summarize"
-      - "help"
-    
-  # If you have a public API or webhook:
-  api:
-    # Low trust - minimal access
-    allowExec: false
-    allowFileWrite: false
-    allowSensitiveData: false
-    rateLimit: 5  # Stricter rate limit
+Use multi-agent routing to assign different trust levels per channel:
+
+```json5
+// ~/.openclaw/openclaw.json
+{
+  agents: {
+    list: [
+      {
+        id: "trusted",
+        workspace: "~/.openclaw/workspace-trusted",
+        tools: {
+          profile: "full",           // All tools enabled
+          elevated: { enabled: true }
+        }
+      },
+      {
+        id: "restricted",
+        workspace: "~/.openclaw/workspace-restricted",
+        sandbox: { mode: "all", workspaceAccess: "ro" },
+        tools: {
+          profile: "minimal",        // Limited tools
+          deny: ["exec", "browser"]
+        }
+      }
+    ]
+  },
+  
+  // Route channels to appropriate agents
+  bindings: [
+    { agentId: "trusted", match: { channel: "telegram" } },
+    { agentId: "restricted", match: { channel: "discord" } }
+  ]
+}
 ```
 
 ### 9.3 Separate Contexts
 
-Consider whether channels should share memory/context:
+Control session isolation per channel:
 
-```yaml
-sessions:
-  isolation: "per-channel"  # Each channel gets its own context
-  # Or:
-  # isolation: "shared"  # All channels share context (riskier)
+```json5
+// ~/.openclaw/openclaw.json
+{
+  session: {
+    dmScope: "per-channel-peer",  // Isolate by channel + sender
+    // Options: main | per-peer | per-channel-peer | per-account-channel-peer
+  }
+}
 ```
 
 **Why this matters:** If a public Discord channel shares context with your private Telegram, information could leak between them.
@@ -1214,7 +1278,7 @@ sessions:
 ```bash
 echo "=== Channel Isolation Check ==="
 echo "Configured channels:"
-grep -E "^  (telegram|discord|signal|whatsapp|slack):" ~/.openclaw/config.yaml 2>/dev/null || echo "Check config manually"
+grep -E "^  (telegram|discord|signal|whatsapp|slack):" ~/.openclaw/openclaw.json 2>/dev/null || echo "Check config manually"
 echo ""
 echo "⚠️ Consider: Should each channel have the same permissions?"
 ```
@@ -1228,7 +1292,7 @@ echo "⚠️ Consider: Should each channel have the same permissions?"
 ### 10.1 What to Backup
 
 Critical files:
-- `~/.openclaw/config.yaml` - Your configuration
+- `~/.openclaw/openclaw.json` - Your configuration
 - `~/.openclaw/memory/` - Agent memory (if using)
 - `~/.openclaw/skills/` - Custom skills
 - Environment file with secrets (store separately, encrypted)
@@ -1249,7 +1313,7 @@ mkdir -p "$BACKUP_DIR"
 tar -czf "$BACKUP_FILE" \
   --exclude='*.log' \
   --exclude='node_modules' \
-  ~/.openclaw/config.yaml \
+  ~/.openclaw/openclaw.json \
   ~/.openclaw/memory/ \
   ~/.openclaw/skills/ \
   2>/dev/null
@@ -1296,7 +1360,7 @@ ls -la ~/.openclaw/
 
 echo ""
 echo "2. Secrets Check:"
-grep -iE "(sk-ant-|sk-|xoxb-)" ~/.openclaw/config.yaml 2>/dev/null && echo "❌ Plain text secrets found!" || echo "✅ No plain text secrets"
+grep -iE "(sk-ant-|sk-|xoxb-)" ~/.openclaw/openclaw.json 2>/dev/null && echo "❌ Plain text secrets found!" || echo "✅ No plain text secrets"
 
 echo ""
 echo "3. Network Check:"
