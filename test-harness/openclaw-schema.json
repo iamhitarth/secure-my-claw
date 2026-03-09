@@ -1,0 +1,25 @@
+{
+  "syncedAt": "2026-03-09T22:50:48Z",
+  "upstreamVersion": "v2026.3.8",
+  "repo": "openclaw/openclaw",
+  "topLevelKeys": [
+    "gateway", "channels", "agents", "bindings", "session", "messages", "talk",
+    "tools", "skills", "plugins", "browser", "ui", "hooks", "canvasHost",
+    "discovery", "env", "secrets", "auth", "logging", "wizard", "models", "cron"
+  ],
+  "deprecatedKeys": {
+    "security": "Split into gateway.auth, tools.exec, etc.",
+    "mcp": "Now plugin-based, use plugins.entries",
+    "bridge": "Removed - nodes connect via Gateway WebSocket"
+  },
+  "pathMigrations": {
+    "gateway.host": "gateway.bind",
+    "gateway.token": "gateway.auth.token",
+    "gateway.password": "gateway.auth.password",
+    "security.rateLimit": "gateway.auth.rateLimit",
+    "security.exec": "tools.exec",
+    "security.elevated": "tools.elevated"
+  },
+  "configFile": "~/.openclaw/openclaw.json",
+  "format": "json5"
+}

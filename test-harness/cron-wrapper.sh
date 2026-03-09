@@ -5,6 +5,15 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(dirname "$SCRIPT_DIR")"
 BASELINE_FILE="$SCRIPT_DIR/.error-baseline"
+SCHEMA_FILE="$SCRIPT_DIR/openclaw-schema.json"
+
+# Sync schema from upstream OpenClaw (weekly or if missing)
+SCHEMA_AGE_DAYS=7
+if [ ! -f "$SCHEMA_FILE" ] || [ $(find "$SCHEMA_FILE" -mtime +$SCHEMA_AGE_DAYS 2>/dev/null | wc -l) -gt 0 ]; then
+  echo "📥 Syncing schema from upstream OpenClaw..."
+  bash "$SCRIPT_DIR/sync-schema.sh" 2>/dev/null || echo "⚠️ Schema sync failed, using cached"
+  echo ""
+fi
 
 # Run validation
 RESULT=$(node "$SCRIPT_DIR/validate-config-blocks.js" "$REPO_DIR/guide.md" --json 2>&1)
