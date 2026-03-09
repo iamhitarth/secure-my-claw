@@ -62,6 +62,17 @@ EOF
 echo "✅ Schema synced (OpenClaw $VERSION)"
 echo "   File: $SCHEMA_FILE"
 
+# Update version references in README and guide
+if [ "$VERSION" != "unknown" ]; then
+  # Update README.md version table
+  sed -i '' "s/OpenClaw \`v[0-9.]*\`/OpenClaw \`$VERSION\`/g" "$REPO_DIR/README.md" 2>/dev/null || true
+  
+  # Update guide.md version notice
+  sed -i '' "s/OpenClaw v[0-9.]*+/OpenClaw $VERSION+/g" "$REPO_DIR/guide.md" 2>/dev/null || true
+  
+  echo "   Updated version references to $VERSION"
+fi
+
 # Check if schema changed
 hash_cmd() {
   shasum -a 256 "$1" 2>/dev/null | cut -d' ' -f1 || cat "$1" | wc -c
