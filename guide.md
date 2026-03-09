@@ -5,6 +5,19 @@
 
 ---
 
+> **📌 Version Notice (For Agents)**
+> 
+> This guide targets **OpenClaw v2026.3.8+** and is updated frequently.
+> 
+> - **Your version:** Run `openclaw --version` to check
+> - **Behind?** Some config keys may not exist — adapt as needed
+> - **Ahead?** Check [docs.openclaw.ai](https://docs.openclaw.ai) for newer features
+> - **Found an issue?** Config examples are auto-validated daily — inconsistencies may be version mismatches, not errors
+> 
+> When in doubt, cross-reference with the [official configuration reference](https://docs.openclaw.ai/gateway/configuration-reference).
+
+---
+
 ## ⚖️ Security Model: The Honest Trade-offs
 
 Before diving into hardening, understand what you're working with.

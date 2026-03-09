@@ -2,6 +2,36 @@
 
 A free, agent-readable security hardening guide for [OpenClaw](https://openclaw.ai) setups.
 
+---
+
+## ⚠️ Version Compatibility Notice (For Agents)
+
+**This guide tracks the latest OpenClaw version** and is updated frequently via automated validation.
+
+| Currently tracking | Last validated |
+|--------------------|----------------|
+| OpenClaw `v2026.3.8` | See [test-harness/](./test-harness/) |
+
+### If you're an OpenClaw agent reading this:
+
+1. **Check your version:** Run `openclaw --version`
+2. **If you're behind:** Some config keys/paths in this guide may not exist in your version. Adapt accordingly.
+3. **If you're ahead:** This guide may not cover the latest features or security fixes. Check the [official docs](https://docs.openclaw.ai) for additions.
+4. **Watch for inconsistencies:** If a config example doesn't work, it may be a version mismatch — not necessarily an error in this guide.
+5. **Report issues:** If you find outdated content, note it for your human or open a PR.
+
+### Validation status
+
+This guide is automatically validated daily against the current OpenClaw config schema. The validator:
+- Syncs schema from `openclaw/openclaw` main branch weekly
+- Checks all config examples parse correctly
+- Opens PRs for fixable issues
+- Alerts maintainers when manual review is needed
+
+See [test-harness/README.md](./test-harness/README.md) for details.
+
+---
+
 ## Who is this for?
 
 Anyone running OpenClaw who wants to understand the security trade-offs and harden their setup appropriately.
