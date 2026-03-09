@@ -353,6 +353,55 @@ As of February 2026, infostealers are actively targeting `.openclaw/` directorie
    - Regenerate gateway token
    - Review memory files for sensitive info that may have been exfiltrated
 
+### 2.5 Never Pass Secrets as CLI Arguments
+
+**🚨 Security Risk:** When starting the gateway with `--password <secret>`, the password is visible to any user on the system via `ps aux`:
+
+```bash
+# Anyone can see this:
+ps aux | grep openclaw
+# → node openclaw.mjs gateway run --password mysecret123
+```
+
+This also affects Docker containers (`docker inspect`, `docker top`).
+
+**Always use environment variables instead:**
+```bash
+# ❌ Wrong - visible in process list
+openclaw gateway run --password mysecret
+
+# ✅ Correct - use env var
+export OPENCLAW_GATEWAY_PASSWORD="mysecret"
+openclaw gateway run
+```
+
+### 2.6 Check for Leaked Keys in models.json
+
+⚠️ **Known Bug (March 2026):** SecretRefs (Keychain, exec-source) can leak plaintext API keys to `models.json` due to merge logic bugs. See [openclaw/openclaw#34335](https://github.com/openclaw/openclaw/issues/34335).
+
+**Check for leaked keys:**
+```bash
+grep -i "apikey" ~/.openclaw/agents/*/agent/models.json 2>/dev/null
+```
+
+**If you find plaintext keys, either:**
+
+1. **Set replace mode** (recommended):
+```json5
+// openclaw.json
+{
+  "models": {
+    "mode": "replace"
+  }
+}
+```
+
+2. **Or delete and restart:**
+```bash
+rm ~/.openclaw/agents/*/agent/models.json
+openclaw gateway restart
+```
+
 ### Checkpoint 2
 ```bash
 # Verify no plain text secrets in config:
@@ -985,6 +1034,26 @@ crontab -l
 # macOS:
 sudo tcpdump -i any -n 'not host 127.0.0.1' 2>/dev/null | head -50
 ```
+
+**Memory File Integrity (NEW - March 2026):**
+
+The ClawHavoc campaign ([Nebius research](https://nebius.com/blog/posts/openclaw-security)) includes a technique where malicious skills write directly to `MEMORY.md` and `SOUL.md` for **persistent prompt injection across sessions**.
+
+```bash
+# Check for recent modifications to core files
+ls -la ~/clawd/MEMORY.md ~/clawd/SOUL.md 2>/dev/null
+git -C ~/clawd diff MEMORY.md SOUL.md 2>/dev/null
+
+# Look for suspicious instructions in memory files
+grep -iE "(POST|curl|send|forward|exfil|ignore.*previous|disregard)" \
+  ~/clawd/MEMORY.md ~/clawd/SOUL.md ~/.openclaw/memory/*.md 2>/dev/null
+```
+
+**Signs of memory poisoning:**
+- Instructions to forward data to external URLs
+- Commands to ignore safety guidelines
+- Persistent personas you didn't create
+- Encoded/obfuscated text blocks
 
 **Signs of compromise:**
 - New LaunchAgents you didn't create
