@@ -24,6 +24,7 @@ Self-validating documentation system for the OpenClaw security guide.
 | `extract-blocks.js` | Extracts code blocks from markdown |
 | `sync-schema.sh` | Fetches latest config schema from GitHub |
 | `cron-wrapper.sh` | Entry point for cron - outputs markdown summary |
+| `auto-pr.sh` | Creates PR when fixable errors are detected |
 | `test-guide.sh` | Manual test runner with Docker support |
 | `openclaw-schema.json` | Cached schema from upstream |
 | `.error-baseline` | Last known error count (currently: 0) |
@@ -59,8 +60,28 @@ node validate-config-blocks.js ../guide.md
 | Errors increased | 🚨 Alert Discord with new errors |
 | Errors decreased | 🎉 Celebrate progress |
 | No change, 0 errors | Reply `HEARTBEAT_OK` (silent) |
-| No change, >0 errors | Reply `HEARTBEAT_OK` (silent) |
+| No change, >0 errors | Attempt auto-fix PR |
 | Schema changed upstream | ⚠️ Flag for review |
+
+### Auto-PR Behavior
+
+When errors exist, the cron attempts to auto-fix and open a PR:
+
+1. Creates branch `auto-fix/YYYY-MM-DD`
+2. Applies fixable changes (e.g., config.yaml → openclaw.json)
+3. Re-validates to confirm fix worked
+4. Pushes and opens PR via `gh pr create`
+5. Reports PR URL to Discord
+
+**Auto-fixable issues:**
+- `config.yaml` references → `openclaw.json`
+
+**Not auto-fixed (needs manual review):**
+- YAML config blocks → JSON5
+- Deprecated key usage
+- Version bumps
+
+Disable auto-PR: `AUTO_PR=false ./cron-wrapper.sh`
 
 ## What Gets Validated
 

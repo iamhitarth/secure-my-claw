@@ -55,3 +55,22 @@ if [ "$ERRORS" -lt "$BASELINE" ] || [ ! -f "$BASELINE_FILE" ]; then
   echo ""
   echo "(Baseline updated to $ERRORS)"
 fi
+
+# Auto-PR if errors exist and auto-fix is enabled
+if [ "$ERRORS" -gt 0 ] && [ "${AUTO_PR:-true}" = "true" ]; then
+  echo ""
+  echo "---"
+  echo ""
+  echo "## Auto-PR Attempt"
+  echo ""
+  PR_OUTPUT=$(bash "$SCRIPT_DIR/auto-pr.sh" 2>&1) || true
+  echo "$PR_OUTPUT"
+  
+  # Extract PR URL if created
+  PR_URL=$(echo "$PR_OUTPUT" | grep "^PR_URL=" | cut -d= -f2)
+  if [ -n "$PR_URL" ]; then
+    echo ""
+    echo "🔧 **Auto-fix PR created:** $PR_URL"
+    echo "Please review and merge if the fixes look good."
+  fi
+fi
