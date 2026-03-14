@@ -211,6 +211,31 @@ These install **trojans and remote access malware**.
 3. Verify on official OpenClaw docs
 4. When in doubt, don't install
 
+### ⚠️ Fake npm Packages Warning
+
+Malicious npm packages have been published masquerading as official OpenClaw installers ([JFrog research, March 2026](https://thehackernews.com/2026/03/malicious-npm-package-posing-as.html)):
+- `@openclaw-ai/openclawai` (GhostClaw campaign, March 2026)
+- Similar typosquat variations
+
+These deploy **full RAT malware** including Keychain theft, browser credential extraction, SSH keys, crypto wallets, and persistent backdoors.
+
+**The only legitimate OpenClaw package is `openclaw`:**
+```bash
+# ✅ Official package
+npm install -g openclaw
+
+# ❌ Never install packages like:
+# @openclaw-ai/anything
+# openclaw-installer
+# openclawai
+# openclaw-core
+```
+
+**Before installing:**
+1. Verify the exact package name: `openclaw`
+2. Check the publisher on npmjs.com
+3. Compare download counts (official has 500k+ weekly)
+
 ---
 
 ## Part 1: User & Permissions
