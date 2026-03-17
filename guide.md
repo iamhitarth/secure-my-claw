@@ -335,13 +335,64 @@ anthropic:
   apiKey: ${ANTHROPIC_API_KEY}  # ✅ References environment variable
 ```
 
-Then set the environment variable in your shell profile:
+Then set the environment variable:
+
+**For Linux (systemd services)**, use a separate environment file:
+
+**For macOS (LaunchAgents)**, use OpenClaw's secrets file (recommended) or `launchctl setenv`:
+
+> ⚠️ **macOS users:** Adding `export` to `~/.zshrc` does NOT work for LaunchAgents. The gateway runs as a LaunchAgent and doesn't source your shell profile. Use one of these methods instead:
+
+**Method 1: OpenClaw secrets file (recommended)**
 ```bash
-# Add to ~/.bashrc or ~/.zshrc:
-export ANTHROPIC_API_KEY="sk-ant-XXXXX"
+# Create a secrets file:
+cat > ~/.openclaw/secrets.json << 'EOF'
+{
+  "providers": {
+    "anthropic": { "apiKey": "sk-ant-XXXXX" },
+    "openai": { "apiKey": "sk-XXXXX" },
+    "google": { "apiKey": "AIza-XXXXX" }
+  },
+  "channels": {
+    "telegram": { "token": "123456:ABC-..." },
+    "discord": { "token": "MTQ..." }
+  }
+}
+EOF
+
+# Secure it:
+chmod 600 ~/.openclaw/secrets.json
 ```
 
-**For systemd services**, use a separate environment file:
+Then in `openclaw.json`, reference secrets with SecretRef:
+```json5
+{
+  providers: {
+    anthropic: {
+      apiKey: { source: "file", provider: "default", id: "/providers/anthropic/apiKey" }
+    }
+  },
+  secrets: {
+    providers: {
+      default: { source: "file", path: "~/.openclaw/secrets.json", mode: "json" }
+    }
+  }
+}
+```
+
+**Method 2: launchctl setenv (simpler but requires re-running after reboot)**
+```bash
+# Set env vars that LaunchAgents can see:
+launchctl setenv ANTHROPIC_API_KEY "sk-ant-XXXXX"
+launchctl setenv OPENAI_API_KEY "sk-XXXXX"
+
+# Restart gateway to pick up new vars:
+launchctl kickstart -k gui/$UID/ai.openclaw.gateway
+```
+
+Add to a login script (e.g., in System Settings → Login Items) to persist after reboot.
+
+**For systemd services (Linux)**, use a separate environment file:
 ```bash
 # /etc/openclaw/env (create this file)
 ANTHROPIC_API_KEY=sk-ant-XXXXX
