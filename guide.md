@@ -7,7 +7,7 @@
 
 > **📌 Version Notice (For Agents)**
 > 
-> This guide targets **OpenClaw v2026.3.8+** and is updated frequently.
+> This guide targets **OpenClaw v2026.3.12+** and is updated frequently.
 > 
 > - **Your version:** Run `openclaw --version` to check
 > - **Behind?** Some config keys may not exist — adapt as needed
@@ -168,20 +168,32 @@ echo "Home: $HOME"
 openclaw --version
 ```
 
-### Minimum Safe Version: 2026.2.25
+### Minimum Safe Version: 2026.3.12
 
-Versions before 2026.2.25 contain **critical vulnerabilities**:
+Versions before 2026.3.12 contain **critical vulnerabilities**:
+
+**Critical/High (must upgrade immediately):**
+- **Origin bypass in trusted-proxy mode (2026.3.11)** - Attackers can spoof origin headers when `gateway.auth.mode: trusted-proxy`, bypassing allowedOrigins entirely. **Do not use trusted-proxy mode on internet-exposed gateways.**
+- **Cross-origin WebSocket hijack (2026.2.25)** - Malicious websites can brute-force gateway password via WebSocket (localhost exempt from rate limiting) and auto-pair as trusted device, gaining full agent control
+- **Workspace boundary bypass (2026.2.25)** - Path validation flaw allows agent to access files outside designated workspace
 - **One-click RCE (2026.1.29)** - Malicious website can steal your auth token and gain full gateway control
+
+**Moderate (upgrade soon):**
+- **Exec approval bypass (2026.3.8)** - Flawed glob-to-POSIX translation allows bypassing exec allowlists with crafted commands
+- **Credential exposure in setup codes (2026.3.12)** - Bootstrap codes could leak credentials; verify new setup mechanism after upgrade
+- **Rate limit bypass (2026.3.12)** - Rate limiter could be circumvented; fixed by moving limiter to start of request pipeline
+- **Authorization bypass (2026.2.25)** - DM-paired senders incorrectly authorized in group contexts
+
+**Previously fixed (for reference):**
 - **Command injection (2026.1.29)** - Attackers can execute arbitrary commands
 - **Auth token theft (2026.1.29)** - Your gateway can be hijacked remotely
-- **Log poisoning (2026.2.13)** - Unsanitized WebSocket headers could inject malicious content into logs, enabling indirect prompt injection if your agent reads logs
+- **Log poisoning (2026.2.13)** - Unsanitized WebSocket headers could inject malicious content into logs
 - **60+ security fixes (2026.2.15)** - Various vulnerabilities patched in comprehensive security audit
-- **SSRF vulnerabilities (2026.2.18)** - Gateway, image tool, and Urbit auth SSRF allowing internal network probing and cloud metadata access
+- **SSRF vulnerabilities (2026.2.18)** - Gateway, image tool, and Urbit auth SSRF allowing internal network probing
 - **Webhook auth bypasses (2026.2.18)** - Missing authentication in Telnyx and Twilio providers
 - **Path traversal (2026.2.18)** - Browser upload endpoint allows arbitrary file writes
-- **Cross-origin WebSocket hijack (2026.2.25)** - Malicious websites can brute-force gateway password via WebSocket (localhost exempt from rate limiting) and auto-pair as trusted device, gaining full agent control
 
-**If your version is older than 2026.2.25:**
+**If your version is older than 2026.3.12:**
 
 ```bash
 # Update immediately
@@ -194,7 +206,9 @@ npm install -g openclaw@latest
 openclaw --version
 ```
 
-**🚨 Do not proceed with the rest of this guide until you're on 2026.2.25 or later.**
+> ⚠️ **Docker users:** Version 2026.3.13 had a tagging issue. If on Docker, check the [Reddit thread](https://www.reddit.com/r/openclaw/comments/1rtf8ev/) for guidance, or wait for 2026.3.14+.
+
+**🚨 Do not proceed with the rest of this guide until you're on 2026.3.12 or later.**
 
 ### ⚠️ Fake Extensions Warning
 
@@ -859,12 +873,14 @@ The OpenClaw gateway accepts commands via HTTP. Without authentication, anyone w
     bind: "loopback",           // Localhost only
     port: 18789,
     auth: {
-      mode: "token",
+      mode: "token",            // ⚠️ NEVER use "trusted-proxy" on internet-exposed gateways
       token: "${OPENCLAW_GATEWAY_TOKEN}"  // Required - use env var
     }
   }
 }
 ```
+
+> 🚨 **Critical Warning (CVE-2026-XXXXX, March 2026):** Never use `gateway.auth.mode: "trusted-proxy"` on internet-exposed gateways. This mode trusts `X-Forwarded-*` headers, which attackers can spoof to bypass `allowedOrigins` entirely. Only use `trusted-proxy` behind a properly configured reverse proxy that strips/overwrites forwarded headers from clients.
 
 Generate a strong token:
 ```bash
