@@ -180,6 +180,7 @@ Versions before 2026.3.12 contain **critical vulnerabilities**:
 
 **Moderate (upgrade soon):**
 - **Exec approval bypass (2026.3.8)** - Flawed glob-to-POSIX translation allows bypassing exec allowlists with crafted commands
+- **Exec allowlist bypass via multiplexers (2026.2.23, CVE-2026-22175)** - `busybox sh -c` or `toybox sh -c` wrappers can circumvent allow-always grants while executing arbitrary payloads
 - **Credential exposure in setup codes (2026.3.12)** - Bootstrap codes could leak credentials; verify new setup mechanism after upgrade
 - **Rate limit bypass (2026.3.12)** - Rate limiter could be circumvented; fixed by moving limiter to start of request pipeline
 - **Authorization bypass (2026.2.25)** - DM-paired senders incorrectly authorized in group contexts
@@ -192,6 +193,7 @@ Versions before 2026.3.12 contain **critical vulnerabilities**:
 - **SSRF vulnerabilities (2026.2.18)** - Gateway, image tool, and Urbit auth SSRF allowing internal network probing
 - **Webhook auth bypasses (2026.2.18)** - Missing authentication in Telnyx and Twilio providers
 - **Path traversal (2026.2.18)** - Browser upload endpoint allows arbitrary file writes
+- **Feishu path traversal (2026.2.19, CVE-2026-22171)** - Media key injection allows arbitrary file writes via path traversal in Feishu media download flow
 
 **If your version is older than 2026.3.12:**
 
