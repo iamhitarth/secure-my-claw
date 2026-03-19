@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  e2e-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - E2E_DISCORD_BOT_TOKEN=${E2E_DISCORD_BOT_TOKEN}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - E2E_CHANNEL_ID=1482488306401939641
+    volumes:
+      # Mount guide.md for reference (read-only)
+      - ../../../guide.md:/home/testuser/guide.md:ro
+    network_mode: bridge
