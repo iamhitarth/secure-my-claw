@@ -181,6 +181,7 @@ Versions before 2026.3.12 contain **critical vulnerabilities**:
 **Moderate (upgrade soon):**
 - **Exec approval bypass (2026.3.8)** - Flawed glob-to-POSIX translation allows bypassing exec allowlists with crafted commands
 - **Exec allowlist bypass via multiplexers (2026.2.23, CVE-2026-22175)** - `busybox sh -c` or `toybox sh -c` wrappers can circumvent allow-always grants while executing arbitrary payloads
+- **Exec allowlist bypass via env wrappers (2026.2.22, CVE-2026-27566)** - `env bash` or shell-dispatch wrapper chains can circumvent allowlist checks
 - **Credential exposure in setup codes (2026.3.12)** - Bootstrap codes could leak credentials; verify new setup mechanism after upgrade
 - **Rate limit bypass (2026.3.12)** - Rate limiter could be circumvented; fixed by moving limiter to start of request pipeline
 - **Authorization bypass (2026.2.25)** - DM-paired senders incorrectly authorized in group contexts
