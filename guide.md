@@ -195,6 +195,13 @@ Versions before 2026.3.12 contain **critical vulnerabilities**:
 - **Webhook auth bypasses (2026.2.18)** - Missing authentication in Telnyx and Twilio providers
 - **Path traversal (2026.2.18)** - Browser upload endpoint allows arbitrary file writes
 - **Feishu path traversal (2026.2.19, CVE-2026-22171)** - Media key injection allows arbitrary file writes via path traversal in Feishu media download flow
+- **Lobster command injection (2026.2.19, CVE-2026-32000)** - Command injection in Lobster extension on Windows
+- **Media byte limit bypass (2026.2.22, CVE-2026-32049)** - Resource exhaustion via media upload size bypass
+- **macOS exec allowlist bypass (2026.2.22, CVE-2026-32016)** - Path validation bypass in macOS exec allowlist
+- **Path traversal via symlinks (2026.2.26, CVE-2026-32055)** - In-workspace symlinks could escape sandbox boundaries
+- **Device metadata spoofing (2026.2.26, CVE-2026-32014)** - Metadata spoofing during device reconnect
+- **Authorization bypass (2026.3.1, CVE-2026-32051)** - operator.write permission escalation to owner-level tools
+- **Webhook DoS (2026.3.2, CVE-2026-32011)** - DoS in BlueBubbles and Google Chat webhook handlers
 
 **If your version is older than 2026.3.12:**
 
