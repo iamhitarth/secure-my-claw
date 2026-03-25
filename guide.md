@@ -1340,6 +1340,34 @@ echo "=== Skills Audit Complete ==="
 
 **📣 Tell your human:** "Part 8 complete. I've audited all installed skills for red flags. [Results summary]. Going forward, I'll run the pre-install checklist before adding any new skills. Remember: the #1 ClawHub skill was malware in Feb 2026—popularity doesn't mean safety."
 
+### 8.9 All Dependencies Are Attack Surface
+
+> ⚠️ **LiteLLM Supply Chain Attack (March 2026):** The popular Python package `litellm` (97M downloads/month) was compromised for ~1 hour. Anyone who ran `pip install litellm` during that window had SSH keys, AWS/GCP/Azure creds, env vars, crypto wallets, and more exfiltrated. The attack spread to transitive dependencies—installing `dspy` (which depends on litellm) would also compromise you.
+
+This isn't just a Python problem. Supply chain attacks hit every ecosystem:
+
+| Ecosystem | Recent Examples |
+|-----------|-----------------|
+| **PyPI** | LiteLLM (Mar 2026), ultralytics, pytorch-nightly |
+| **npm** | GhostClaw (Feb 2026), event-stream, ua-parser-js |
+| **Go** | ctx package hijacking |
+| **Cargo** | rustdecimal typosquat |
+| **RubyGems** | bootstrap-sass |
+
+**If you run MCP servers, tools, or extensions alongside OpenClaw**, their dependencies are your attack surface too.
+
+**Mitigations:**
+- **Pin exact versions** in lockfiles (`package-lock.json`, `requirements.txt` with hashes, `Cargo.lock`)
+- **Run security audits regularly:**
+  ```bash
+  npm audit              # Node.js
+  pip-audit              # Python (install: pip install pip-audit)
+  cargo audit            # Rust (install: cargo install cargo-audit)
+  ```
+- **Be extra cautious with transitive dependencies** — the package you install may be safe, but its dependencies might not be
+- **For MCP servers:** audit their `package.json` / `requirements.txt` before running
+- **Consider vendoring** critical dependencies (copying source into your repo) for maximum control
+
 ---
 
 *Section significantly expanded in response to the February 2026 ClawHub malware incident. Skills are markdown, but markdown in an agent ecosystem is an installer. Treat every skill like you'd treat any code you're about to run with full system access—because that's exactly what it is.*
