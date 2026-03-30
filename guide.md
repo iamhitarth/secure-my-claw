@@ -160,6 +160,33 @@ echo "Home: $HOME"
 **If OpenClaw is not installed:** Stop here. Install OpenClaw first: https://docs.openclaw.ai/getting-started
 
 ---
+## 🚨 CRITICAL: Verify Your Installation Source
+
+> ⚠️ **Fake OpenClaw Installers (March 2026):** Counterfeit OpenClaw packages are being promoted through search engines (including AI-powered search). These mimic the real installer but deliver malware that disables firewalls and routes traffic through compromised systems.
+
+**The ONLY legitimate sources for OpenClaw:**
+- **npm:** `npm install -g openclaw` (package name is exactly `openclaw`)
+- **GitHub:** `https://github.com/openclaw/openclaw` (official repository)
+- **Docs:** `https://docs.openclaw.ai`
+
+**Do NOT trust:**
+- Search engine results for "install OpenClaw" or "Clawdbot download"
+- Links from AI chatbots that aren't referencing the official repo
+- Any package with a slightly different name (`open-claw`, `openclaw-ai`, `clawdbot-installer`, etc.)
+
+**Verify an existing installation:**
+```bash
+# Check where your binary lives
+which openclaw
+
+# Should point to your npm global or a known path, NOT a random directory
+# Suspicious: /tmp/*, ~/Downloads/*, unknown paths
+
+# Verify the package source
+npm list -g openclaw 2>/dev/null
+```
+
+---
 ## 🚨 CRITICAL: Version Check (Do This First!)
 
 **Stop everything and check your version:**
@@ -202,6 +229,8 @@ Versions before 2026.3.12 contain **critical vulnerabilities**:
 - **Device metadata spoofing (2026.2.26, CVE-2026-32014)** - Metadata spoofing during device reconnect
 - **Authorization bypass (2026.3.1, CVE-2026-32051)** - operator.write permission escalation to owner-level tools
 - **Webhook DoS (2026.3.2, CVE-2026-32011)** - DoS in BlueBubbles and Google Chat webhook handlers
+- **Session sandbox escape (2026.3.11, CVE-2026-32918)** - Sandboxed subagents could supply crafted `sessionKey` values to `session_status` to read/modify parent or sibling session state
+- **Config/debug access control bypass (2026.3.12, CVE-2026-32914)** - Non-owner users with command authorization could access owner-only `/config` and `/debug` surfaces
 
 **If your version is older than 2026.3.12:**
 
@@ -1153,7 +1182,7 @@ Not all skill sources are equal:
 | **Skills you wrote yourself** | ✅ High | You control the code |
 | **Official OpenClaw skills** (`clawdbot/skills/`) | ✅ High | Maintained by OpenClaw team |
 | **Skills from known developers** | ⚠️ Medium | Verify author, check their other work |
-| **ClawHub - popular skills** | ⚠️ Low-Medium | "Popular" ≠ safe (see: Feb 2026 incident) |
+| **ClawHub - popular skills** | ⚠️ Low-Medium | "Popular" ≠ safe — download counts can be faked (see below) |
 | **ClawHub - new/unknown** | ❌ Low | Audit thoroughly before use |
 | **Random GitHub repos** | ❌ Low | Same caution as any code |
 | **Links from social media** | ❌ Very Low | Prime vector for attacks |
@@ -1178,6 +1207,10 @@ ClawHub now scans all skills via VirusTotal before publishing:
 - Skills are re-scanned daily
 
 **Important:** This is not a silver bullet. Prompt injection payloads can evade automated detection. Always perform manual vetting using the checklist in sections 8.2-8.3.
+
+> ⚠️ **Download Count Forgery (March 2026):** [Silverfort discovered](https://www.silverfort.com/blog/clawhub-vulnerability-enables-attackers-to-manipulate-rankings-to-become-the-number-one-skill/) a critical vulnerability in ClawHub's download API that allowed attackers to bypass rate limiting and inflate download counts. Their proof-of-concept skill reached #1 in its category and accumulated 3,900 real executions across 50+ cities in just 6 days. While ClawHub has since mitigated this specific vulnerability, **treat download counts as decorative, not diagnostic.** A skill with 100k downloads is not inherently safer than one with 100.
+>
+> **Additional defense:** Silverfort released [ClawNet](https://github.com/silverfort-open-source/ClawNet), an open-source plugin that uses your agent's LLM to scan skills for malicious patterns at install time. Consider adding it as a defense-in-depth layer alongside the audit checklist in §8.2-8.3.
 
 > ⚠️ **Comment Section Attacks (February 2026):** Attackers are posting fake "troubleshooting" comments on popular ClawHub skills containing base64-encoded malware loaders ([source](https://www.helpnetsecurity.com/2026/02/23/clawhub-malicious-comment-infostealer/)). These comments look like helpful tips but download infostealers when executed. ClawHub's VirusTotal integration only scans skill packages, NOT comments.
 >
