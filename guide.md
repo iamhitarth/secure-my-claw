@@ -231,6 +231,9 @@ Versions before 2026.3.12 contain **critical vulnerabilities**:
 - **Webhook DoS (2026.3.2, CVE-2026-32011)** - DoS in BlueBubbles and Google Chat webhook handlers
 - **Session sandbox escape (2026.3.11, CVE-2026-32918)** - Sandboxed subagents could supply crafted `sessionKey` values to `session_status` to read/modify parent or sibling session state
 - **Config/debug access control bypass (2026.3.12, CVE-2026-32914)** - Non-owner users with command authorization could access owner-only `/config` and `/debug` surfaces
+- **Critical privilege escalation via token rotation (2026.3.11, CVE-2026-32922, CVSS 9.9)** - `device.token.rotate` failed to constrain new token scopes; an `operator.pairing` caller could obtain `operator.admin`, enabling RCE on connected nodes
+- **Approval integrity bypass via script runners (2026.3.11, CVE-2026-32978)** - `system.run` approvals fail to bind mutable file operands for tsx/jiti script runners, allowing approved-then-rewritten code execution (TOCTOU)
+- **Plugin subagent route auth bypass (2026.3.11, CVE-2026-32916)** - Plugin-owned routes execute gateway methods via synthetic admin-scoped client, allowing unauthenticated remote privilege escalation including session deletion and agent execution
 
 **If your version is older than 2026.3.12:**
 
@@ -1056,7 +1059,17 @@ docker run --rm -i mcp-server-name
 sudo -u mcp-sandbox npx @some/mcp-server
 ```
 
-### 7.4 Remove Unused MCP Servers
+### 7.4 Plugin Route Isolation
+
+> ⚠️ **CVE-2026-32916 (March 2026):** Plugin-owned subagent routes were found to execute gateway methods through a synthetic client with broad admin scopes. Unauthenticated remote requests could invoke `runtime.subagent` to perform privileged actions like session deletion and agent execution. Fixed in 2026.3.11.
+
+**If you run plugins that register custom routes:**
+- Update to 2026.3.11+ immediately
+- Audit which plugins register HTTP routes (check plugin documentation or source)
+- Plugins should not need admin-level gateway access — if one claims to, be suspicious
+- Consider running untrusted plugins in a separate OpenClaw instance with restricted permissions
+
+### 7.5 Remove Unused MCP Servers
 
 ```bash
 # List what's installed:
