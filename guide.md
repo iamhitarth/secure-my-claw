@@ -213,27 +213,39 @@ Versions before 2026.3.12 contain **critical vulnerabilities**:
 - **Rate limit bypass (2026.3.12)** - Rate limiter could be circumvented; fixed by moving limiter to start of request pipeline
 - **Authorization bypass (2026.2.25)** - DM-paired senders incorrectly authorized in group contexts
 
-**Previously fixed (for reference):**
-- **Command injection (2026.1.29)** - Attackers can execute arbitrary commands
-- **Auth token theft (2026.1.29)** - Your gateway can be hijacked remotely
-- **Log poisoning (2026.2.13)** - Unsanitized WebSocket headers could inject malicious content into logs
-- **60+ security fixes (2026.2.15)** - Various vulnerabilities patched in comprehensive security audit
-- **SSRF vulnerabilities (2026.2.18)** - Gateway, image tool, and Urbit auth SSRF allowing internal network probing
-- **Webhook auth bypasses (2026.2.18)** - Missing authentication in Telnyx and Twilio providers
-- **Path traversal (2026.2.18)** - Browser upload endpoint allows arbitrary file writes
-- **Feishu path traversal (2026.2.19, CVE-2026-22171)** - Media key injection allows arbitrary file writes via path traversal in Feishu media download flow
-- **Lobster command injection (2026.2.19, CVE-2026-32000)** - Command injection in Lobster extension on Windows
-- **Media byte limit bypass (2026.2.22, CVE-2026-32049)** - Resource exhaustion via media upload size bypass
-- **macOS exec allowlist bypass (2026.2.22, CVE-2026-32016)** - Path validation bypass in macOS exec allowlist
-- **Path traversal via symlinks (2026.2.26, CVE-2026-32055)** - In-workspace symlinks could escape sandbox boundaries
-- **Device metadata spoofing (2026.2.26, CVE-2026-32014)** - Metadata spoofing during device reconnect
-- **Authorization bypass (2026.3.1, CVE-2026-32051)** - operator.write permission escalation to owner-level tools
-- **Webhook DoS (2026.3.2, CVE-2026-32011)** - DoS in BlueBubbles and Google Chat webhook handlers
-- **Session sandbox escape (2026.3.11, CVE-2026-32918)** - Sandboxed subagents could supply crafted `sessionKey` values to `session_status` to read/modify parent or sibling session state
-- **Config/debug access control bypass (2026.3.12, CVE-2026-32914)** - Non-owner users with command authorization could access owner-only `/config` and `/debug` surfaces
-- **Critical privilege escalation via token rotation (2026.3.11, CVE-2026-32922, CVSS 9.9)** - `device.token.rotate` failed to constrain new token scopes; an `operator.pairing` caller could obtain `operator.admin`, enabling RCE on connected nodes
-- **Approval integrity bypass via script runners (2026.3.11, CVE-2026-32978)** - `system.run` approvals fail to bind mutable file operands for tsx/jiti script runners, allowing approved-then-rewritten code execution (TOCTOU)
-- **Plugin subagent route auth bypass (2026.3.11, CVE-2026-32916)** - Plugin-owned routes execute gateway methods via synthetic admin-scoped client, allowing unauthenticated remote privilege escalation including session deletion and agent execution
+**Previously fixed (notable — 29 CVEs total through April 2026):**
+- **Critical priv esc via token rotation (2026.3.11, CVE-2026-32922, CVSS 9.9)** - `device.token.rotate` failed to constrain scopes; `operator.pairing` → `operator.admin` → RCE
+- **Plugin subagent route auth bypass (2026.3.11, CVE-2026-32916)** - Unauthenticated remote privilege escalation via synthetic admin-scoped client
+- **Session sandbox escape (2026.3.11, CVE-2026-32918)** - Crafted `sessionKey` values break subagent isolation
+- **Config/debug access control bypass (2026.3.12, CVE-2026-32914)** - Non-owners accessing owner-only `/config` and `/debug`
+- **Approval integrity bypass (2026.3.11, CVE-2026-32978)** - TOCTOU via tsx/jiti mutable file operands
+- **Path traversal via symlinks (2026.2.26, CVE-2026-32055)** - In-workspace symlinks escape sandbox
+- **One-click RCE + auth token theft (2026.1.29)** - Malicious website → full gateway control
+- **60+ security fixes (2026.2.15)** - Comprehensive audit covering SSRF, webhook auth, path traversal, log poisoning, and more
+
+<details>
+<summary>Full CVE list (click to expand)</summary>
+
+| CVE | Description | Fixed In |
+|-----|-------------|----------|
+| CVE-2026-32922 | Privilege escalation via token rotation (CVSS 9.9) | 2026.3.11 |
+| CVE-2026-32916 | Plugin subagent route auth bypass | 2026.3.11 |
+| CVE-2026-32978 | Approval integrity bypass (tsx/jiti TOCTOU) | 2026.3.11 |
+| CVE-2026-32918 | Session sandbox escape via sessionKey | 2026.3.11 |
+| CVE-2026-32914 | Config/debug access control bypass | 2026.3.12 |
+| CVE-2026-32055 | Path traversal via in-workspace symlinks | 2026.2.26 |
+| CVE-2026-32051 | operator.write → owner tools escalation | 2026.3.1 |
+| CVE-2026-32049 | Media byte limit bypass (resource exhaustion) | 2026.2.22 |
+| CVE-2026-32016 | macOS exec allowlist path validation bypass | 2026.2.22 |
+| CVE-2026-32014 | Device metadata spoofing on reconnect | 2026.2.26 |
+| CVE-2026-32011 | BlueBubbles/Google Chat webhook DoS | 2026.3.2 |
+| CVE-2026-32000 | Lobster command injection (Windows) | 2026.2.19 |
+| CVE-2026-27566 | Exec allowlist bypass via env wrappers | 2026.2.22 |
+| CVE-2026-22175 | Exec allowlist bypass via multiplexers | 2026.2.23 |
+| CVE-2026-22171 | Feishu media path traversal | 2026.2.19 |
+
+*Plus 14 additional fixes in 2026.1.29–2026.2.18 covering RCE, SSRF, webhook auth, log poisoning, and path traversal.*
+</details>
 
 **If your version is older than 2026.3.12:**
 
@@ -247,8 +259,6 @@ npm install -g openclaw@latest
 # Verify
 openclaw --version
 ```
-
-> ⚠️ **Docker users:** Version 2026.3.13 had a tagging issue. If on Docker, check the [Reddit thread](https://www.reddit.com/r/openclaw/comments/1rtf8ev/) for guidance, or wait for 2026.3.14+.
 
 **🚨 Do not proceed with the rest of this guide until you're on 2026.3.12 or later.**
 
@@ -955,7 +965,7 @@ Messaging apps (Discord, Telegram, Slack) auto-fetch URL previews. Attackers can
 ### Why This Matters
 The OpenClaw gateway accepts commands via HTTP. Without authentication, anyone who can reach the gateway port can control your agent. Even on localhost, other applications or malicious scripts could send commands.
 
-### 10.1 Enable Gateway Token
+### 6.1 Enable Gateway Token
 
 **This is not optional.** Add a gateway token to your config:
 
@@ -985,7 +995,7 @@ echo 'export OPENCLAW_GATEWAY_TOKEN="your-generated-token-here"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-### 10.2 Verify Token is Required
+### 6.2 Verify Token is Required
 
 ```bash
 # This should FAIL (no token):
