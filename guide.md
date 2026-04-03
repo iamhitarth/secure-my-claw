@@ -1651,6 +1651,16 @@ Quarterly, rotate:
 - Bot tokens (Telegram, Discord)
 - Any passwords
 
+### 11.4 Watch for Fake Token / GitHub Issue Phishing
+
+> ⚠️ **Fake $CLAW Token Phishing (March 2026):** Attackers are creating fake GitHub accounts, opening issue threads, and tagging OpenClaw developers with fake "$5,000 CLAW token" giveaways. The links lead to wallet-draining sites. **OpenClaw has no token and never will** — any claim otherwise is a scam.
+
+**What to do:**
+- Never connect a wallet to links from GitHub issues or DMs
+- Treat token airdrops / giveaways as suspicious by default
+- Verify the account is official before clicking anything
+- If you see a fake campaign, report it and warn the team
+
 ---
 
 ## Troubleshooting

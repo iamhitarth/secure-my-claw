@@ -6,11 +6,52 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 E2E_DIR="$SCRIPT_DIR/e2e"
+LOG_DIR="$HOME/.openclaw/logs"
+mkdir -p "$LOG_DIR"
+DIAG_FILE="$LOG_DIR/e2e-orbstack-$(date +%Y%m%d-%H%M%S).log"
+
+# Mirror all stdout/stderr to a per-run log so we can inspect failures later.
+exec > >(tee -a "$DIAG_FILE") 2>&1
+
+echo "OrbStack/E2E diagnostic log: $DIAG_FILE"
 
 # Load env vars
 if [ -f "$SCRIPT_DIR/.env" ]; then
     export $(grep -v '^#' "$SCRIPT_DIR/.env" | xargs)
 fi
+
+run_diag_cmd() {
+    local label="$1"
+    shift
+    echo
+    echo "---- $label ----"
+    "$@" 2>&1 || true
+}
+
+run_diag_shell() {
+    local label="$1"
+    local cmd="$2"
+    echo
+    echo "---- $label ----"
+    bash -lc "$cmd" 2>&1 || true
+}
+
+collect_orbstack_diag() {
+    local stage="$1"
+    echo
+    echo "=== OrbStack diagnostics: $stage ==="
+    run_diag_shell "date / uptime" 'date; uptime'
+    run_diag_cmd "orb version" orb version
+    run_diag_cmd "orb status" timeout 10 orb status
+    run_diag_cmd "docker context ls" timeout 10 docker context ls
+    run_diag_cmd "docker version" timeout 10 docker version
+    run_diag_cmd "docker info" timeout 10 docker info
+    run_diag_shell "processes" "ps aux | egrep 'OrbStack|orbstack|docker' | grep -v egrep"
+    run_diag_shell "launchd gateway env" "launchctl print gui/$UID/ai.openclaw.gateway 2>/dev/null | sed -n '/EnvironmentVariables/,/\<\/dict\>/p'"
+    run_diag_shell "OrbStack logs" 'ls -la ~/Library/Logs/OrbStack 2>/dev/null; tail -100 ~/Library/Logs/OrbStack/*.log 2>/dev/null'
+    run_diag_shell "gateway log" 'tail -100 ~/.openclaw/logs/gateway.log 2>/dev/null'
+    run_diag_shell "docker desktop / OrbStack app state" "osascript -e 'tell application \"System Events\" to (name of every process)' 2>/dev/null | tr ',' '\n' | grep -i -E 'orbstack|docker'"
+}
 
 # Aggressive OrbStack recovery function
 # OrbStack can get stuck after macOS sleep/wake cycles (known issue: GitHub #1933, #2003)
@@ -21,7 +62,7 @@ recover_orbstack() {
     sleep 3
     
     echo "Starting OrbStack fresh..."
-    open -a OrbStack
+    open -gj -a OrbStack 2>/dev/null || true
     
     # Wait up to 90 seconds for Docker to become available
     for i in {1..18}; do
@@ -32,6 +73,8 @@ recover_orbstack() {
         fi
         echo "Waiting for Docker... ($((i*5))s)"
     done
+
+    collect_orbstack_diag "recovery timeout"
     return 1
 }
 
@@ -53,9 +96,11 @@ if ! docker info >/dev/null 2>&1; then
     # If still not responding, try aggressive recovery
     if ! docker info >/dev/null 2>&1; then
         echo "Soft start failed, attempting aggressive recovery..."
+        collect_orbstack_diag "soft-start timeout"
         if ! recover_orbstack; then
             echo "ERROR: Docker is not available after recovery attempts."
             echo "OrbStack may be in a bad state. Manual intervention required."
+            collect_orbstack_diag "final failure after recovery"
             exit 1
         fi
     fi
@@ -64,8 +109,10 @@ fi
 # Verify Docker is actually responsive (not just socket exists)
 if ! timeout 10 docker ps >/dev/null 2>&1; then
     echo "Docker socket exists but commands hang. Attempting recovery..."
+    collect_orbstack_diag "docker ps hang"
     if ! recover_orbstack; then
         echo "ERROR: Docker is unresponsive. Manual intervention required."
+        collect_orbstack_diag "final failure after hang"
         exit 1
     fi
 fi
